@@ -1,0 +1,20 @@
+#first line comment
+[default] #namespace
+inidata=tests.dat #initial data
+nprocs=4
+bodies=39
+
+[logs]
+	dump=2000
+	period = 92.891234
+	epoch=2007.0
+	inidata=dump.dat
+#full line comment
+
+#some blank lines above
+[map]
+xres=23
+yres=98
+
+[ext]
+fs=none
