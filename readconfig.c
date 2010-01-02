@@ -13,8 +13,6 @@
 #include <string.h>
 #include "libreadconfig.h"
 
-configOptions options[MAX_OPTIONS_NUM];
-configNamespace configSpace[MAX_CONFIG_SIZE];
 
 int main(int argc, char* argv[]){
 
@@ -26,64 +24,65 @@ int main(int argc, char* argv[]){
 	int i = 0, opts = 0;
   int xres = 0; int yres = 0;
 
-	inif = "config"; //input file
+  //configOptions options[MAX_OPTIONS_NUM];
+  configNamespace cs[50];
+	
+  inif = "config"; //input file
 	printf("\n");
-  opts = parseConfigFile(inif, sep, comm);
+  opts = parseConfigFile(inif, sep, comm, cs);
+	printf("\nALL OPTIONS: \n");
+  printAll(opts, cs);
 
 	/**
 	 * now tricky part -- do some conversions
 	 * you need to handle this by hand
 	 */
+	printf("\nCONVERTED OPTIONS:\n");
 	for(i = 0; i < opts; i++){
-    if(strcmp(configSpace[i].space,"default") == 0 || strcmp(configSpace[i].space, "logs") == 0){
-		  for(k = 0; k < configSpace[i].num; k++){
-			  if(strcmp(configSpace[i].options[k].name,"period") == 0) period = atof(configSpace[i].options[k].value);  
-			  if(strcmp(configSpace[i].options[k].name,"nprocs") == 0) nprocs = atoi(configSpace[i].options[k].value); 
-			  if(strcmp(configSpace[i].options[k].name,"bodies") == 0) nbody = atoi(configSpace[i].options[k].value); 
-			  if(strcmp(configSpace[i].options[k].name,"dump") == 0) dump = atoi(configSpace[i].options[k].value); 
-			  if(strcmp(configSpace[i].options[k].name,"epoch") == 0) epoch = atof(configSpace[i].options[k].value); 
+    if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
+		  for(k = 0; k < cs[i].num; k++){
+			  if(strcmp(cs[i].options[k].name,"period") == 0) period = atof(cs[i].options[k].value);  
+			  if(strcmp(cs[i].options[k].name,"nprocs") == 0) nprocs = atoi(cs[i].options[k].value); 
+			  if(strcmp(cs[i].options[k].name,"bodies") == 0) nbody = atoi(cs[i].options[k].value); 
+			  if(strcmp(cs[i].options[k].name,"dump") == 0) dump = atoi(cs[i].options[k].value); 
+			  if(strcmp(cs[i].options[k].name,"epoch") == 0) epoch = atof(cs[i].options[k].value); 
 		  }
 	  }
-    if(strcmp(configSpace[i].space,"map") == 0){
-		  for(k = 0; k < configSpace[i].num; k++){
-			  if(strcmp(configSpace[i].options[k].name,"xres") == 0) xres = atoi(configSpace[i].options[k].value);  
-			  if(strcmp(configSpace[i].options[k].name,"yres") == 0) yres = atoi(configSpace[i].options[k].value); 
+    if(strcmp(cs[i].space,"map") == 0){
+		  for(k = 0; k < cs[i].num; k++){
+			  if(strcmp(cs[i].options[k].name,"xres") == 0) xres = atoi(cs[i].options[k].value);  
+			  if(strcmp(cs[i].options[k].name,"yres") == 0) yres = atoi(cs[i].options[k].value); 
       }
     }
 
-  }
 
-	printf("\nCONVERTED OPTIONS:\n");
 	/**
 	 * here we just print options 
 	 */
-	for(i = 0; i < opts; i++){
-    if(strcmp(configSpace[i].space,"default") == 0 || strcmp(configSpace[i].space, "logs") == 0){
-		printf("Namespace [%s]:\n",configSpace[i].space);
-		for(k = 0; k < configSpace[i].num; k++){
-			printf("%s\t = \t",configSpace[i].options[k].name);
-			if (strcmp(configSpace[i].options[k].name,"period") == 0) printf("%.6f\n",period);
-			if (strcmp(configSpace[i].options[k].name,"inidata") == 0) printf("%s\n",configSpace[i].options[k].value);
-			if (strcmp(configSpace[i].options[k].name,"nprocs") == 0) printf("%d\n",nprocs);
-			if (strcmp(configSpace[i].options[k].name,"bodies") == 0) printf("%d\n",nbody);
-			if (strcmp(configSpace[i].options[k].name,"dump") == 0) printf("%d\n",dump);
-			if (strcmp(configSpace[i].options[k].name,"epoch") == 0) printf("%.6f\n",epoch);
+    if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
+		printf("Namespace [%s]:\n",cs[i].space);
+		for(k = 0; k < cs[i].num; k++){
+			printf("%s\t = \t",cs[i].options[k].name);
+			if (strcmp(cs[i].options[k].name,"period") == 0) printf("%.6f\n",period);
+			if (strcmp(cs[i].options[k].name,"inidata") == 0) printf("%s\n",cs[i].options[k].value);
+			if (strcmp(cs[i].options[k].name,"nprocs") == 0) printf("%d\n",nprocs);
+			if (strcmp(cs[i].options[k].name,"bodies") == 0) printf("%d\n",nbody);
+			if (strcmp(cs[i].options[k].name,"dump") == 0) printf("%d\n",dump);
+			if (strcmp(cs[i].options[k].name,"epoch") == 0) printf("%.6f\n",epoch);
 		}
     
 		printf("\n");
     }
-    if(strcmp(configSpace[i].space,"map") == 0){
-		printf("Namespace [%s]:\n",configSpace[i].space);
-		for(k = 0; k < configSpace[i].num; k++){
-			printf("%s\t = \t",configSpace[i].options[k].name);
-			if (strcmp(configSpace[i].options[k].name,"xres") == 0) printf("%d\n",xres);
-			if (strcmp(configSpace[i].options[k].name,"yres") == 0) printf("%d\n",yres);
+    if(strcmp(cs[i].space,"map") == 0){
+		printf("Namespace [%s]:\n",cs[i].space);
+		for(k = 0; k < cs[i].num; k++){
+			printf("%s\t = \t",cs[i].options[k].name);
+			if (strcmp(cs[i].options[k].name,"xres") == 0) printf("%d\n",xres);
+			if (strcmp(cs[i].options[k].name,"yres") == 0) printf("%d\n",yres);
     }
     }
-	}
 
-		printf("\nALL OPTIONS: \n");
-  printAll(opts);
+  }
 	printf("\n");
 	return 0;
 }
