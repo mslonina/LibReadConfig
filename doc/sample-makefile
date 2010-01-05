@@ -1,0 +1,15 @@
+NAME = readconfig
+CC = gcc
+CCFLAGS = -Wall
+RM = rm -vf
+
+all: lib demo main
+
+demo:
+	$(CC) $(CCFLAGS) -c readconfig.c -o readconfig.o
+
+main:
+	$(CC) $(CCFLAGS) -o $(NAME) readconfig.o -lreadconfig 
+
+clean:
+	$(RM) $(NAME) *.o *.a 

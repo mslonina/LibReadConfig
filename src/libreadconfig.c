@@ -1,8 +1,8 @@
 /**
  * ReadConfig -- config file parser
  * mariusz slonina <mariusz.slonina@gmail.com>
- * last modified: 25/12/2009
- *
+ * last modified: 05/01/2010
+ * (c) 2009 - 2010
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,9 +29,13 @@
  */
 void configError(int j,char *m){
   
-  printf("%s\nLine %d: %s\n",E_CONFIG_SYNTAX, j, m);
-  exit(1);
+  printf("%s\nLine %d: %s\n", E_CONFIG_SYNTAX, j, m);
 
+#ifdef OMPI_MPI_H
+  MPI_Finalize();
+#else
+  exit(1);
+#endif
 }
 
 /**
@@ -136,10 +140,11 @@ int charcount(char *l, char* s){
  * reads config namespaces, vars names and values into global options structure
  * and returns number of config vars
  */
-int parsefile(FILE* read, char* SEP, char* COMM, configNamespace* configSpace){
+int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* configSpace, configTypes* ct, int numCT){
   
   int i = 0; int j = 0; int n = 0; int sepc = 0;
   char* line; char l[MAX_LINE_LENGTH]; char* b; char* c;
+  int ret = 0;
 
   while(n < MAX_CONFIG_SIZE){
         
@@ -215,6 +220,10 @@ int parsefile(FILE* read, char* SEP, char* COMM, configNamespace* configSpace){
       strcpy(configSpace[n-1].options[i].value,c);
       c = trim(strtok(NULL,"\n"));
     }  
+    ret = matchType(configSpace[n-1].options[i].name, configSpace[n-1].options[i].value, ct, numCT);
+    if(ret == 99) configError(j, E_WRONG_INPUT);
+
+    configSpace[n-1].options[i].type = ret;
 
     i++;
     configSpace[n-1].num = i;
@@ -226,12 +235,16 @@ int parsefile(FILE* read, char* SEP, char* COMM, configNamespace* configSpace){
 /**
  * prints all options
  */
-void printAll(int n, configNamespace* configSpace){
+void libreadconfig_printAll(int n, configNamespace* configSpace){
   int i = 0; int k = 0;
   for (i = 0; i < n; i++){
 		printf("Namespace [%s]:\n",configSpace[i].space);
     for (k = 0; k < configSpace[i].num; k++){
-			printf("\t%s = %s\n",configSpace[i].options[k].name,configSpace[i].options[k].value);
+			printf("\t%s = %s [type %d]\n",
+          configSpace[i].options[k].name,
+          configSpace[i].options[k].value,
+          configSpace[i].options[k].type
+          );
     }
     printf("\n");
   }
@@ -240,14 +253,14 @@ void printAll(int n, configNamespace* configSpace){
 /**
  * reads config file -- wrapper function
  */
-int parseConfigFile(char* inif, char* sep, char* comm, configNamespace* configSpace){
+int parseConfigFile(char* inif, char* sep, char* comm, configNamespace* configSpace, configTypes* ct, int numCT){
   
   FILE* read;
   int opts;
 
 	read = fopen(inif,"r");
 	if(read != NULL){
-		opts = parsefile(read, sep, comm, configSpace); //read and parse config file
+		opts = libreadconfig_parsefile(read, sep, comm, configSpace, ct, numCT); //read and parse config file
 	}else{
 		perror("Error opening config file:");
 		exit(1);
@@ -258,4 +271,103 @@ int parseConfigFile(char* inif, char* sep, char* comm, configNamespace* configSp
 		exit(0);
 	}
   return opts;
+}
+
+int matchType(char* varname, char* value, configTypes* ct, int numCT){
+  
+  int i = 0;
+
+  while(i < numCT){
+    if(strcmp(ct[i].name,varname) == 0){
+    //  printf("Varname: %s -> %s ", varname, value);
+      if(checkType(value, ct[i].type) != 0) 
+        return 99;
+      else
+        return ct[i].type;
+    }
+      i++;
+  }
+  return 0;
+
+}
+
+/**
+ * Check type of the value 
+ * Return 0 if the type is correct, 1 otherwise
+ */
+int checkType(char* value, int type){
+  
+  int i = 0, ret = 0, k = 0;
+  char *p;
+
+  switch(type){
+    
+    case RC_INT:
+      for(i = 0; i < strlen(value); i++){
+        if(isdigit(value[i]) || value[0] == '-'){ 
+          ret = 0;
+        }else{
+          ret = 1;
+          break;
+        }
+      }
+    //  if(ret == 0) printf("is INT\n");
+    //  if(ret == 1) printf("is NOT INT (followed by %d)\n", value[i]);
+      break;
+
+    case RC_FLOAT:
+      k = strtol(value, &p, 10);
+      if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
+      //  printf("is FLOAT\n");
+        ret = 0;
+      }else{
+      //  printf("is NOT FLOAT (followed by %s)\n", p);
+        ret = 1;
+      }
+      break;
+
+    case RC_DOUBLE:
+      k = strtol(value, &p, 10);
+      if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
+      //  printf("is DOUBLE\n");
+        ret = 0;
+      }else{
+      //  printf("is NOT DOUBLE (followed by %s)\n", p);
+        ret = 1;
+      }
+      break;
+
+    case RC_CHAR:
+      for(i = 0; i < strlen(value); i++){
+        if(isalpha(value[i]) || isallowed(value[i]) == 0){
+          ret = 0;
+        }else{
+          ret = 1;
+          break;
+        }
+      }
+     // if(ret == 0) printf("is CHAR\n");
+     // if(ret == 1) printf("is NOT CHAR (followed by %d)\n",value[i]);
+      break;
+  
+    default:
+      break;
+
+  }
+
+  return ret;
+
+}
+
+/* Check if c is one of the allowed chars */
+int isallowed(int c){
+
+  char* allowed = "_-. ";
+  int i = 0;
+
+  for(i = 0; i < strlen(allowed); i++){
+    if(c == allowed[i]) return 0;
+  }
+
+  return 1;
 }
