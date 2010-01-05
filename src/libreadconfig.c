@@ -8,12 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <sys/dir.h>
 #include <dirent.h>
 #include <ctype.h>
 #include <string.h>
@@ -27,7 +22,7 @@
  *
  * prints errors (m) in config file with number of line j
  */
-void configError(int j,char *m){
+void LRC_configError(int j,char *m){
   
   printf("%s\nLine %d: %s\n", E_CONFIG_SYNTAX, j, m);
 
@@ -47,7 +42,7 @@ void configError(int j,char *m){
 
 #define NUL '\0'
 
-char *trim(char *str){
+char* LRC_trim(char *str){
 
   char *ibuf = str, *obuf = str;
   int i = 0, cnt = 0;
@@ -94,18 +89,18 @@ char *trim(char *str){
 /**
  * check namespace and trim it
  */
-char* nametrim(char* l, int j){
+char* LRC_nameTrim(char* l, int j){
 
   int len = 0;
 
   len = strlen(l);
 
-  if(l[len-1] != ']') configError(j,E_MISSING_BRACKET);
+  if(l[len-1] != ']') LRC_configError(j,E_MISSING_BRACKET);
 
   /* quick and dirty solution using trim function above */  
   l[0] = ' ';
   l[len-1] = ' ';
-  l = trim(l);  
+  l = LRC_trim(l);  
 
   return l;
 }
@@ -113,7 +108,7 @@ char* nametrim(char* l, int j){
 /**
  * count number of separators in line
  */
-int charcount(char *l, char* s){
+int LRC_charCount(char *l, char* s){
   
   int i = 0; int sep = 0; int len = 0; 
 
@@ -140,7 +135,7 @@ int charcount(char *l, char* s){
  * reads config namespaces, vars names and values into global options structure
  * and returns number of config vars
  */
-int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* configSpace, configTypes* ct, int numCT){
+int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
   int i = 0; int j = 0; int n = 0; int sepc = 0;
   char* line; char l[MAX_LINE_LENGTH]; char* b; char* c;
@@ -162,7 +157,7 @@ int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* 
     /**
      * now we have to trim leading and trailing spaces etc.
      */
-    line = trim(line);
+    line = LRC_trim(line);
 
     /**
      * check for full line comments and skip them
@@ -172,19 +167,19 @@ int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* 
     /**
      * check for separator at the begining
      */
-    if (strspn(line, SEP) > 0) configError(j,E_MISSING_VAR);
+    if (strspn(line, SEP) > 0) LRC_configError(j,E_MISSING_VAR);
 
     /**
      * first split var/value and inline comments
      * trim leading and trailing spaces
      */
-    b = trim(strtok(line,COMM));
+    b = LRC_trim(strtok(line,COMM));
 
     /**
      * check for namespaces
      */
     if (b[0] == '['){
-      b = nametrim(b,j);
+      b = LRC_nameTrim(b,j);
       strcpy(configSpace[n].space,b); 
       i = 0;
       n++;
@@ -194,34 +189,34 @@ int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* 
     /**
      * check if in the var/value string the separator exist
      */
-    if(strstr(b,SEP) == NULL) configError(j,E_MISSING_SEP); 
+    if(strstr(b,SEP) == NULL) LRC_configError(j,E_MISSING_SEP); 
     
     /**
      * check some special case:
      * we have separator, but no value
      */
-    if((strlen(b) - 1) == strcspn(b,SEP)) configError(j,E_MISSING_VAL);
+    if((strlen(b) - 1) == strcspn(b,SEP)) LRC_configError(j,E_MISSING_VAL);
 
     /**
      * we allow to have only one separator in line
      */
-    sepc = charcount(b, SEP);
-    if(sepc > 1) configError(j,E_TOOMANY_SEP);
+    sepc = LRC_charCount(b, SEP);
+    if(sepc > 1) LRC_configError(j,E_TOOMANY_SEP);
     
     /**
      * ok, now we are prepared
      */     
-    c = trim(strtok(b,SEP));
+    c = LRC_trim(strtok(b,SEP));
     
     strcpy(configSpace[n-1].options[i].name,c);
   
     while (c!=NULL){
       if (c[0] == '\n') break;
       strcpy(configSpace[n-1].options[i].value,c);
-      c = trim(strtok(NULL,"\n"));
+      c = LRC_trim(strtok(NULL,"\n"));
     }  
-    ret = matchType(configSpace[n-1].options[i].name, configSpace[n-1].options[i].value, ct, numCT);
-    if(ret == 99) configError(j, E_WRONG_INPUT);
+    ret = LRC_matchType(configSpace[n-1].options[i].name, configSpace[n-1].options[i].value, ct, numCT);
+    if(ret == 99) LRC_configError(j, E_WRONG_INPUT);
 
     configSpace[n-1].options[i].type = ret;
 
@@ -235,7 +230,7 @@ int libreadconfig_parsefile(FILE* read, char* SEP, char* COMM, configNamespace* 
 /**
  * prints all options
  */
-void libreadconfig_printAll(int n, configNamespace* configSpace){
+void LRC_printAll(int n, LRC_configNamespace* configSpace){
   int i = 0; int k = 0;
   for (i = 0; i < n; i++){
 		printf("Namespace [%s]:\n",configSpace[i].space);
@@ -253,14 +248,14 @@ void libreadconfig_printAll(int n, configNamespace* configSpace){
 /**
  * reads config file -- wrapper function
  */
-int parseConfigFile(char* inif, char* sep, char* comm, configNamespace* configSpace, configTypes* ct, int numCT){
+int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
   FILE* read;
   int opts;
 
 	read = fopen(inif,"r");
 	if(read != NULL){
-		opts = libreadconfig_parsefile(read, sep, comm, configSpace, ct, numCT); //read and parse config file
+		opts = LRC_parseFile(read, sep, comm, configSpace, ct, numCT); //read and parse config file
 	}else{
 		perror("Error opening config file:");
 		exit(1);
@@ -273,14 +268,14 @@ int parseConfigFile(char* inif, char* sep, char* comm, configNamespace* configSp
   return opts;
 }
 
-int matchType(char* varname, char* value, configTypes* ct, int numCT){
+int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
   
   int i = 0;
 
   while(i < numCT){
     if(strcmp(ct[i].name,varname) == 0){
     //  printf("Varname: %s -> %s ", varname, value);
-      if(checkType(value, ct[i].type) != 0) 
+      if(LRC_checkType(value, ct[i].type) != 0) 
         return 99;
       else
         return ct[i].type;
@@ -295,14 +290,14 @@ int matchType(char* varname, char* value, configTypes* ct, int numCT){
  * Check type of the value 
  * Return 0 if the type is correct, 1 otherwise
  */
-int checkType(char* value, int type){
+int LRC_checkType(char* value, int type){
   
   int i = 0, ret = 0, k = 0;
   char *p;
 
   switch(type){
     
-    case RC_INT:
+    case LRC_INT:
       for(i = 0; i < strlen(value); i++){
         if(isdigit(value[i]) || value[0] == '-'){ 
           ret = 0;
@@ -315,7 +310,7 @@ int checkType(char* value, int type){
     //  if(ret == 1) printf("is NOT INT (followed by %d)\n", value[i]);
       break;
 
-    case RC_FLOAT:
+    case LRC_FLOAT:
       k = strtol(value, &p, 10);
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
       //  printf("is FLOAT\n");
@@ -326,7 +321,7 @@ int checkType(char* value, int type){
       }
       break;
 
-    case RC_DOUBLE:
+    case LRC_DOUBLE:
       k = strtol(value, &p, 10);
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
       //  printf("is DOUBLE\n");
@@ -337,9 +332,9 @@ int checkType(char* value, int type){
       }
       break;
 
-    case RC_CHAR:
+    case LRC_CHAR:
       for(i = 0; i < strlen(value); i++){
-        if(isalpha(value[i]) || isallowed(value[i]) == 0){
+        if(isalpha(value[i]) || LRC_isAllowed(value[i]) == 0){
           ret = 0;
         }else{
           ret = 1;
@@ -360,7 +355,7 @@ int checkType(char* value, int type){
 }
 
 /* Check if c is one of the allowed chars */
-int isallowed(int c){
+int LRC_isAllowed(int c){
 
   char* allowed = "_-. ";
   int i = 0;

@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
   };
   int numCT = 9;
 	
-  inif = "config"; //input file
+  inif = "sample-config"; //input file
 	printf("\n");
   opts = parseConfigFile(inif, sep, comm, cs, ct, numCT);
 	printf("\nALL OPTIONS: \n");

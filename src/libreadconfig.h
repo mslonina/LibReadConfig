@@ -15,7 +15,7 @@
 #define E_TOOMANY_SEP "To many separators."
 #define E_WRONG_INPUT "Wrong input value type."
 
-enum{ RC_INT, RC_FLOAT, RC_DOUBLE, RC_CHAR }; 
+enum{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR }; 
 
 /**
  * define options structs
@@ -24,29 +24,29 @@ typedef struct {
   char name[MAX_NAME_LENGTH];
   char value[MAX_VALUE_LENGTH];
   int type;
-} configOptions;
+} LRC_configOptions;
 
 typedef struct {
   char space[MAX_NAME_LENGTH]; //name of the namespace
-  configOptions options[MAX_OPTIONS_NUM]; //options for given namespace
+  LRC_configOptions options[MAX_OPTIONS_NUM]; //options for given namespace
   int num; //number of options read
-} configNamespace;
+} LRC_configNamespace;
 
 /* Assgin types */
 typedef struct {
   char name[MAX_NAME_LENGTH];
   int type;
-} configTypes;
+} LRC_configTypes;
 
-void configError(int, char*);
-char* trim(char*);
-char* nametrim(char*, int);
-int charcount(char*, char*);
-int libreadconfig_parsefile(FILE*, char*, char*, configNamespace*, configTypes*, int);
-void libreadconfig_printAll(int, configNamespace*);
-int parseConfigFile(char*, char*, char*, configNamespace*, configTypes* ct, int);
-int matchType(char*, char*, configTypes*, int numCT);
-int checkType(char*, int);
-int isallowed(int);
+void LRC_configError(int, char*);
+char* LRC_trim(char*);
+char* LRC_nameTrim(char*, int);
+int LRC_charCount(char*, char*);
+int LRC_parseFile(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
+void LRC_printAll(int, LRC_configNamespace*);
+int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
+int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
+int LRC_checkType(char*, int);
+int LRC_isAllowed(int);
 
 #endif

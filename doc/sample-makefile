@@ -3,13 +3,13 @@ CC = gcc
 CCFLAGS = -Wall
 RM = rm -vf
 
-all: lib demo main
+all: demo main
 
 demo:
-	$(CC) $(CCFLAGS) -c readconfig.c -o readconfig.o
+	$(CC) $(CCFLAGS) -c sample-readconfig.c -o sample-readconfig.o
 
 main:
-	$(CC) $(CCFLAGS) -o $(NAME) readconfig.o -lreadconfig 
+	$(CC) $(CCFLAGS) -o $(NAME) sample-readconfig.o -lreadconfig 
 
 clean:
 	$(RM) $(NAME) *.o *.a 
