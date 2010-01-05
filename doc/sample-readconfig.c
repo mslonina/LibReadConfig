@@ -24,27 +24,28 @@ int main(int argc, char* argv[]){
 	int i = 0, opts = 0;
   int xres = 0; int yres = 0;
 
-  //configOptions options[MAX_OPTIONS_NUM];
-  configNamespace cs[50];
+  LRC_configNamespace cs[50];
 
-  configTypes ct[] = {
-    {"inidata", RC_CHAR},
-    {"fs", RC_CHAR},
-    {"nprocs", RC_INT},
-    {"bodies", RC_INT},
-    {"dump", RC_INT},
-    {"period", RC_DOUBLE},
-    {"epoch", RC_FLOAT},
-    {"xres", RC_INT},
-    {"yres", RC_INT}
+  LRC_configTypes ct[] = {
+    {"inidata", LRC_CHAR},
+    {"fs", LRC_CHAR},
+    {"nprocs", LRC_INT},
+    {"bodies", LRC_INT},
+    {"dump", LRC_INT},
+    {"period", LRC_DOUBLE},
+    {"epoch", LRC_FLOAT},
+    {"xres", LRC_INT},
+    {"yres", LRC_INT}
   };
   int numCT = 9;
 	
   inif = "sample-config"; //input file
 	printf("\n");
-  opts = parseConfigFile(inif, sep, comm, cs, ct, numCT);
-	printf("\nALL OPTIONS: \n");
-  libreadconfig_printAll(opts, cs);
+  opts = LRC_parseConfigFile(inif, sep, comm, cs, ct, numCT);
+  if(opts < 0) exit(1);
+
+	printf("\nALL OPTIONS [%d]: \n", opts);
+  LRC_printAll(opts, cs);
 
 	/**
 	 * now tricky part -- do some conversions

@@ -40,7 +40,7 @@ typedef struct {
 
 void LRC_configError(int, char*);
 char* LRC_trim(char*);
-char* LRC_nameTrim(char*, int);
+char* LRC_nameTrim(char*);
 int LRC_charCount(char*, char*);
 int LRC_parseFile(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
 void LRC_printAll(int, LRC_configNamespace*);

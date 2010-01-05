@@ -26,11 +26,6 @@ void LRC_configError(int j,char *m){
   
   printf("%s\nLine %d: %s\n", E_CONFIG_SYNTAX, j, m);
 
-#ifdef OMPI_MPI_H
-  MPI_Finalize();
-#else
-  exit(1);
-#endif
 }
 
 /**
@@ -87,15 +82,13 @@ char* LRC_trim(char *str){
 }
 
 /**
- * check namespace and trim it
+ * Check namespace and trim it
  */
-char* LRC_nameTrim(char* l, int j){
+char* LRC_nameTrim(char* l){
 
   int len = 0;
 
   len = strlen(l);
-
-  if(l[len-1] != ']') LRC_configError(j,E_MISSING_BRACKET);
 
   /* quick and dirty solution using trim function above */  
   l[0] = ' ';
@@ -133,13 +126,13 @@ int LRC_charCount(char *l, char* s){
  *  )
  *
  * reads config namespaces, vars names and values into global options structure
- * and returns number of config vars
+ * and returns number of config vars, or -1 on failure
  */
 int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
-  int i = 0; int j = 0; int n = 0; int sepc = 0;
+  int i = 0; int j = 0; int sepc = 0; int n = 0;
   char* line; char l[MAX_LINE_LENGTH]; char* b; char* c;
-  int ret = 0;
+  int ret = 0; int err = 0;
 
   while(n < MAX_CONFIG_SIZE){
         
@@ -167,7 +160,10 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     /**
      * check for separator at the begining
      */
-    if (strspn(line, SEP) > 0) LRC_configError(j,E_MISSING_VAR);
+    if (strspn(line, SEP) > 0){
+      LRC_configError(j,E_MISSING_VAR); 
+      goto failure;
+    }
 
     /**
      * first split var/value and inline comments
@@ -179,7 +175,12 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
      * check for namespaces
      */
     if (b[0] == '['){
-      b = LRC_nameTrim(b,j);
+      if(b[strlen(b)-1] != ']'){
+        LRC_configError(j,E_MISSING_BRACKET); 
+        goto failure;
+      }
+
+      b = LRC_nameTrim(b);
       strcpy(configSpace[n].space,b); 
       i = 0;
       n++;
@@ -189,19 +190,28 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     /**
      * check if in the var/value string the separator exist
      */
-    if(strstr(b,SEP) == NULL) LRC_configError(j,E_MISSING_SEP); 
+    if(strstr(b,SEP) == NULL){
+      LRC_configError(j,E_MISSING_SEP); 
+      goto failure;
+    }
     
     /**
      * check some special case:
      * we have separator, but no value
      */
-    if((strlen(b) - 1) == strcspn(b,SEP)) LRC_configError(j,E_MISSING_VAL);
+    if((strlen(b) - 1) == strcspn(b,SEP)){
+      LRC_configError(j,E_MISSING_VAL); 
+      goto failure;
+    }
 
     /**
      * we allow to have only one separator in line
      */
     sepc = LRC_charCount(b, SEP);
-    if(sepc > 1) LRC_configError(j,E_TOOMANY_SEP);
+    if(sepc > 1){
+      LRC_configError(j,E_TOOMANY_SEP); 
+      goto failure;
+    }
     
     /**
      * ok, now we are prepared
@@ -215,20 +225,26 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
       strcpy(configSpace[n-1].options[i].value,c);
       c = LRC_trim(strtok(NULL,"\n"));
     }  
+
     ret = LRC_matchType(configSpace[n-1].options[i].name, configSpace[n-1].options[i].value, ct, numCT);
-    if(ret == 99) LRC_configError(j, E_WRONG_INPUT);
+    if(ret < 0){
+      LRC_configError(j, E_WRONG_INPUT); 
+      goto failure;
+    }
 
     configSpace[n-1].options[i].type = ret;
 
     i++;
     configSpace[n-1].num = i;
   }
-
   return n;
+
+failure:
+  return -1;
 }
 
 /**
- * prints all options
+ * Prints all options
  */
 void LRC_printAll(int n, LRC_configNamespace* configSpace){
   int i = 0; int k = 0;
@@ -246,7 +262,8 @@ void LRC_printAll(int n, LRC_configNamespace* configSpace){
 }
 
 /**
- * reads config file -- wrapper function
+ * Reads config file -- wrapper function
+ * Returns number of options, or -1 on failure
  */
 int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
@@ -258,27 +275,28 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
 		opts = LRC_parseFile(read, sep, comm, configSpace, ct, numCT); //read and parse config file
 	}else{
 		perror("Error opening config file:");
-		exit(1);
+		return -1;
 	}
 	fclose(read);
-	if(opts == 0){
-		printf("Config file seems to be empty.\n");
-		exit(0);
-	}
+  
   return opts;
 }
 
+/**
+ * Match input type. Returns type (integer value) or -1 on failure 
+ */
 int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
   
   int i = 0;
 
   while(i < numCT){
     if(strcmp(ct[i].name,varname) == 0){
-    //  printf("Varname: %s -> %s ", varname, value);
-      if(LRC_checkType(value, ct[i].type) != 0) 
-        return 99;
-      else
+      if(LRC_checkType(value, ct[i].type) != 0){ 
+//        printf("Error: %s -> %s ", varname, value);
+        return -1;
+      }else{
         return ct[i].type;
+      }
     }
       i++;
   }
@@ -288,7 +306,7 @@ int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
 
 /**
  * Check type of the value 
- * Return 0 if the type is correct, 1 otherwise
+ * Return 0 if the type is correct, -1 otherwise
  */
 int LRC_checkType(char* value, int type){
   
@@ -302,33 +320,30 @@ int LRC_checkType(char* value, int type){
         if(isdigit(value[i]) || value[0] == '-'){ 
           ret = 0;
         }else{
-          ret = 1;
+//          printf("is not INT (followed by %d)\n", value[i]);
+          ret = -1;
           break;
         }
       }
-    //  if(ret == 0) printf("is INT\n");
-    //  if(ret == 1) printf("is NOT INT (followed by %d)\n", value[i]);
       break;
 
     case LRC_FLOAT:
       k = strtol(value, &p, 10);
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
-      //  printf("is FLOAT\n");
         ret = 0;
       }else{
-      //  printf("is NOT FLOAT (followed by %s)\n", p);
-        ret = 1;
+//        printf("is not FLOAT (followed by %s)\n", p);
+        ret = -1;
       }
       break;
 
     case LRC_DOUBLE:
       k = strtol(value, &p, 10);
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
-      //  printf("is DOUBLE\n");
         ret = 0;
       }else{
-      //  printf("is NOT DOUBLE (followed by %s)\n", p);
-        ret = 1;
+//        printf("is not DOUBLE (followed by %s)\n", p);
+        ret = -1;
       }
       break;
 
@@ -337,12 +352,11 @@ int LRC_checkType(char* value, int type){
         if(isalpha(value[i]) || LRC_isAllowed(value[i]) == 0){
           ret = 0;
         }else{
-          ret = 1;
+//          printf("is not STRING (followed by %d)\n",value[i]);
+          ret = -1;
           break;
         }
       }
-     // if(ret == 0) printf("is CHAR\n");
-     // if(ret == 1) printf("is NOT CHAR (followed by %d)\n",value[i]);
       break;
   
     default:
