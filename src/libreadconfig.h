@@ -14,6 +14,7 @@
 #define E_MISSING_BRACKET "Missing bracket in namespace."
 #define E_TOOMANY_SEP "To many separators."
 #define E_WRONG_INPUT "Wrong input value type."
+#define E_UNKNOWN_VAR "Unknown variable."
 
 enum{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR }; 
 
@@ -48,5 +49,6 @@ int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTyp
 int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
 int LRC_checkType(char*, int);
 int LRC_isAllowed(int);
+int LRC_checkName(char*, LRC_configTypes*, int numCT);
 
 #endif

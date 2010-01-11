@@ -217,7 +217,12 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
      * ok, now we are prepared
      */     
     c = LRC_trim(strtok(b,SEP));
-    
+
+    if(LRC_checkName(c, ct, numCT) < 0){
+      LRC_configError(j,E_UNKNOWN_VAR); 
+      goto failure;
+    }
+
     strcpy(configSpace[n-1].options[i].name,c);
   
     while (c!=NULL){
@@ -280,6 +285,21 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
 	fclose(read);
   
   return opts;
+}
+
+int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
+   
+  int i = 0, count = 0;
+
+  for(i = 0; i < numCT; i++){
+    if(strcmp(varname, ct[i].name) == 0) count++;
+  }
+  
+  if(count > 0) 
+    return 0;
+  else
+    return -1;
+
 }
 
 /**
@@ -379,4 +399,11 @@ int LRC_isAllowed(int c){
   }
 
   return 1;
+}
+
+/* Convert types. Returns 0 on success, -1 on failure */
+int LRC_convertTypes(){
+
+
+
 }
