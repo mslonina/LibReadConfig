@@ -35,20 +35,13 @@ typedef struct {
 
 /* Assgin types */
 typedef struct {
+  char space[MAX_NAME_LENGTH];
   char name[MAX_NAME_LENGTH];
   int type;
 } LRC_configTypes;
 
-void LRC_configError(int, char*);
-char* LRC_trim(char*);
-char* LRC_nameTrim(char*);
-int LRC_charCount(char*, char*);
 int LRC_parseFile(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
 void LRC_printAll(int, LRC_configNamespace*);
 int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
-int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
-int LRC_checkType(char*, int);
-int LRC_isAllowed(int);
-int LRC_checkName(char*, LRC_configTypes*, int numCT);
 
 #endif

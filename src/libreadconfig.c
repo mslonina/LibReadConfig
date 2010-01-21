@@ -15,6 +15,18 @@
 #include "libreadconfig.h"
 
 /**
+ * Internal functions
+ */
+void LRC_configError(int, char*);
+char* LRC_trim(char*);
+char* LRC_nameTrim(char*);
+int LRC_charCount(char*, char*);
+int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
+int LRC_checkType(char*, int);
+int LRC_isAllowed(int);
+int LRC_checkName(char*, LRC_configTypes*, int numCT);
+
+/**
  * configError(
  *  int j
  *  char *m
@@ -90,7 +102,7 @@ char* LRC_nameTrim(char* l){
 
   len = strlen(l);
 
-  /* quick and dirty solution using trim function above */  
+  /* Quick and dirty solution using trim function above */  
   l[0] = ' ';
   l[len-1] = ' ';
   l = LRC_trim(l);  
@@ -99,7 +111,7 @@ char* LRC_nameTrim(char* l){
 }
 
 /**
- * count number of separators in line
+ * Count the number of separators in line
  */
 int LRC_charCount(char *l, char* s){
   
@@ -142,23 +154,23 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     line = fgets(l, MAX_LINE_LENGTH, read);
     
     /**
-     * skip blank lines and any NULL
+     * Skip blank lines and any NULL
      */
     if (line == NULL) break;
     if (line[0] == '\n') continue;
     
     /**
-     * now we have to trim leading and trailing spaces etc.
+     * Now we have to trim leading and trailing spaces etc.
      */
     line = LRC_trim(line);
 
     /**
-     * check for full line comments and skip them
+     * Check for full line comments and skip them
      */
     if (strspn(line, COMM) > 0) continue;
     
     /**
-     * check for separator at the begining
+     * Check for separator at the begining
      */
     if (strspn(line, SEP) > 0){
       LRC_configError(j,E_MISSING_VAR); 
@@ -166,13 +178,14 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
 
     /**
-     * first split var/value and inline comments
-     * trim leading and trailing spaces
+     * First split var/value and inline comments
+     * Trim leading and trailing spaces
      */
     b = LRC_trim(strtok(line,COMM));
 
     /**
-     * check for namespaces
+     * Check for namespaces
+     * TODO: check if namespace is allowed
      */
     if (b[0] == '['){
       if(b[strlen(b)-1] != ']'){
@@ -188,7 +201,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
   
     /**
-     * check if in the var/value string the separator exist
+     * Check if in the var/value string the separator exist
      */
     if(strstr(b,SEP) == NULL){
       LRC_configError(j,E_MISSING_SEP); 
@@ -196,7 +209,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
     
     /**
-     * check some special case:
+     * Check some special case:
      * we have separator, but no value
      */
     if((strlen(b) - 1) == strcspn(b,SEP)){
@@ -205,7 +218,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
 
     /**
-     * we allow to have only one separator in line
+     * We allow to have only one separator in line
      */
     sepc = LRC_charCount(b, SEP);
     if(sepc > 1){
@@ -214,10 +227,13 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
     
     /**
-     * ok, now we are prepared
+     * Ok, now we are prepared
      */     
     c = LRC_trim(strtok(b,SEP));
 
+    /**
+     * Check if variable is allowed
+     */
     if(LRC_checkName(c, ct, numCT) < 0){
       LRC_configError(j,E_UNKNOWN_VAR); 
       goto failure;
@@ -287,12 +303,17 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
   return opts;
 }
 
-int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
+/**
+ * Checks if variable is allowed
+ */
+int LRC_checkName(char* space, char* varname, LRC_configTypes* ct, int numCT){
    
   int i = 0, count = 0;
 
   for(i = 0; i < numCT; i++){
-    if(strcmp(varname, ct[i].name) == 0) count++;
+    if(strcmp(space, ct[i].space) == 0){
+      if(strcmp(varname, ct[i].name) == 0) count++;
+    {
   }
   
   if(count > 0) 
