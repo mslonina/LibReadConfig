@@ -123,7 +123,7 @@ int LRC_charCount(char *l, char* s){
  */
 
 /**
- * parsefile (
+ * textParser (
  *  FILE* read, 
  *  char* SEP, 
  *  char* COMM
@@ -132,7 +132,7 @@ int LRC_charCount(char *l, char* s){
  * reads config namespaces, vars names and values into global options structure
  * and returns number of config vars, or -1 on failure
  */
-int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
+int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
   int i = 0; int j = 0; int sepc = 0; int n = 0;
   char* line; char l[MAX_LINE_LENGTH]; char* b; char* c;
@@ -285,7 +285,7 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
 
 	read = fopen(inif,"r");
 	if(read != NULL){
-		opts = LRC_parseFile(read, sep, comm, configSpace, ct, numCT); //read and parse config file
+		opts = LRC_textParser(read, sep, comm, configSpace, ct, numCT); //read and parse config file
 	}else{
 		perror("Error opening config file:");
 		return -1;
@@ -407,26 +407,105 @@ int LRC_isAllowed(int c){
 
   for(i = 0; i < strlen(allowed); i++){
     if(c == allowed[i]) return 0;
-  }
+ }
 
   return 1;
 }
 
-/* Convert types. Returns 0 on success, -1 on failure */
-int LRC_convertTypes(){
+/* HDF5 parser */
+int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int numCT){
+  
+  hid_t group, dataset, dataspace, memspace;
+  hid_t cc_tid;
+  herr_t status, info, obj;
+  hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
+  H5G_info_t group_info;
+  H5O_info_t object_info;
+  int opts = 0, i = 0, k = 0;
+  char link_name[MAX_NAME_LENGTH];
+  ssize_t link;
+  hsize_t edims[1], emaxdims[1];
 
+  LRC_configOptions rdata[1];
 
-  return 0;
-}
+  /* FIXME: [OPEN, NOT CREATE] Create compound datatype */
+  cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
+  hid_t name_dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(name_dt, MAX_NAME_LENGTH);
 
-int LRC_H5parse(){
-  H5open();
-  H5close();
-  return 0;
+  hid_t value_dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(value_dt, MAX_VALUE_LENGTH);
+
+  H5Tinsert(cc_tid, "name", HOFFSET(LRC_configOptions, name), name_dt);
+  H5Tinsert(cc_tid, "value", HOFFSET(LRC_configOptions, value), value_dt);
+  H5Tinsert(cc_tid, "type", HOFFSET(LRC_configOptions, type), H5T_NATIVE_INT);
+
+  /* Open config group */
+  group = H5Gopen(file, CONFIG_GROUP, H5P_DEFAULT);
+
+  /* Get group info */
+  info = H5Gget_info(group, &group_info);
+
+  /* Get number of opts (dataspaces) */
+  opts = group_info.nlinks;
+
+  /* Iterate each dataspace and assign config values */
+  for(i = 0; i < opts; i++){
+
+    /* Get name od dataspace -> the namespace */
+    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, link_name, MAX_SPACE_LENGTH, H5P_DEFAULT);
+    strcpy(cs[i].space,link_name);
+
+    /* Get size of the table with config data */
+    dataset = H5Dopen(group, cs[i].space, H5P_DEFAULT);
+    dataspace = H5Dget_space(dataset);
+    H5Sget_simple_extent_dims(dataspace, edims, emaxdims);
+
+    cs[i].num = (int)edims[0];
+
+    /**
+     * Now we know how many rows are in data tables. 
+     * Thus, we can read them one by one and assign to cs struct
+     */
+    for(k = 0; k < cs[i].num; k++){
+      
+      offset[0] = k;
+      offset[1] = 1;
+      
+      dimsm[0] = 1; 
+      dimsm[1] = 1;
+
+      count[0] = 1;
+      count[1] = 1;
+
+      stride[0] = 1;
+      stride[1] = 1;
+
+      memspace = H5Screate_simple(1, dimsm, NULL);
+      status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
+      status = H5Dread(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, rdata);
+
+      /* Assign values */
+      strcpy(cs[i].options[k].name, rdata->name);
+      strcpy(cs[i].options[k].value, rdata->value);
+      cs[i].options[k].type = rdata->type;
+   
+      H5Sclose(memspace);
+    }
+
+    H5Dclose(dataset);
+    H5Sclose(dataspace);
+
+  }
+
+  H5Tclose(cc_tid);
+  H5Gclose(group);
+  
+  return opts;
 }
 
 /* Write config values to hdf file */
-void LRC_H5writeConfig(hid_t file, LRC_configNamespace* cs, int allopts){
+void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
 
   hid_t group, dataset, dataspace, memspace;
   hid_t cc_tid;
@@ -436,7 +515,7 @@ void LRC_H5writeConfig(hid_t file, LRC_configNamespace* cs, int allopts){
 
   LRC_configOptions ccd;
 
-  group = H5Gcreate(file, "/config", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  group = H5Gcreate(file, CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
  
   /* Create compound datatype */
   cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
@@ -479,8 +558,6 @@ void LRC_H5writeConfig(hid_t file, LRC_configNamespace* cs, int allopts){
       strcpy(ccd.name,cs[i].options[k].name);
       strcpy(ccd.value,cs[i].options[k].value);
       ccd.type = cs[i].options[k].type;
-
-  //    printf("ccd[name] = %s\t ccd[value] = %s\n", ccd.name, ccd.value);
 
       status = H5Dwrite(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, &ccd);
 

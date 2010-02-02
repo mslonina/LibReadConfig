@@ -21,10 +21,11 @@ int main(int argc, char* argv[]){
 	int k = 0;
 	float period = 0.0, epoch = 0.0;
 	
-	int i = 0, opts = 0;
+	int i = 0, opts = 0, h5opts = 0;
   int xres = 0; int yres = 0;
 
   LRC_configNamespace cs[50];
+  LRC_configNamespace cc[50];
 
   LRC_configTypes ct[9] = {
     {"default", "inidata", LRC_CHAR},
@@ -103,7 +104,15 @@ int main(int argc, char* argv[]){
 
   file = H5Fcreate("h5config.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   
-  LRC_H5writeConfig(file, cs, opts);
+  /* Copy config file to hdf5 file */
+  LRC_writeHdfConfig(file, cs, opts);
+
+  /* Read hdf5 config file */
+  h5opts = LRC_hdfParser(file, cc, ct, numCT);
+
+  printf("H5OPTS = %d\n", h5opts);
+  /* Print all options*/
+  LRC_printAll(h5opts, cc);
   
   H5Fclose(file);
 	

@@ -7,8 +7,8 @@ bodies=39
 [logs]
 	dump=2000
 	period = 928.91234e+2
-	epoch=20070
-	inidata=d ump.dat
+	epoch=2007.0
+	inidata=dump.dat
 #full line comment
 
 #some blank lines above
