@@ -303,7 +303,7 @@ int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
   int i = 0, count = 0;
 
   for(i = 0; i < numCT; i++){
-    if(strcmp(varname, ct[i].name) == 0) count++;
+      if(strcmp(varname, ct[i].name) == 0) count++;
   }
   
   if(count > 0) 
