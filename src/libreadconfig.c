@@ -4,15 +4,19 @@
  * last modified: 05/01/2010
  * (c) 2009 - 2010
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <ctype.h>
-#include <string.h>
 #include "libreadconfig.h"
+
+/**
+ * Internal functions
+ */
+void LRC_configError(int, char*);
+char* LRC_trim(char*);
+char* LRC_nameTrim(char*);
+int LRC_charCount(char*, char*);
+int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
+int LRC_checkType(char*, int);
+int LRC_isAllowed(int);
+int LRC_checkName(char*, LRC_configTypes*, int numCT);
 
 /**
  * configError(
@@ -90,7 +94,7 @@ char* LRC_nameTrim(char* l){
 
   len = strlen(l);
 
-  /* quick and dirty solution using trim function above */  
+  /* Quick and dirty solution using trim function above */  
   l[0] = ' ';
   l[len-1] = ' ';
   l = LRC_trim(l);  
@@ -99,7 +103,7 @@ char* LRC_nameTrim(char* l){
 }
 
 /**
- * count number of separators in line
+ * Count the number of separators in line
  */
 int LRC_charCount(char *l, char* s){
   
@@ -142,23 +146,23 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     line = fgets(l, MAX_LINE_LENGTH, read);
     
     /**
-     * skip blank lines and any NULL
+     * Skip blank lines and any NULL
      */
     if (line == NULL) break;
     if (line[0] == '\n') continue;
     
     /**
-     * now we have to trim leading and trailing spaces etc.
+     * Now we have to trim leading and trailing spaces etc.
      */
     line = LRC_trim(line);
 
     /**
-     * check for full line comments and skip them
+     * Check for full line comments and skip them
      */
     if (strspn(line, COMM) > 0) continue;
     
     /**
-     * check for separator at the begining
+     * Check for separator at the begining
      */
     if (strspn(line, SEP) > 0){
       LRC_configError(j,E_MISSING_VAR); 
@@ -166,13 +170,14 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
 
     /**
-     * first split var/value and inline comments
-     * trim leading and trailing spaces
+     * First split var/value and inline comments
+     * Trim leading and trailing spaces
      */
     b = LRC_trim(strtok(line,COMM));
 
     /**
-     * check for namespaces
+     * Check for namespaces
+     * TODO: check if namespace is allowed
      */
     if (b[0] == '['){
       if(b[strlen(b)-1] != ']'){
@@ -188,7 +193,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
   
     /**
-     * check if in the var/value string the separator exist
+     * Check if in the var/value string the separator exist
      */
     if(strstr(b,SEP) == NULL){
       LRC_configError(j,E_MISSING_SEP); 
@@ -196,7 +201,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
     
     /**
-     * check some special case:
+     * Check some special case:
      * we have separator, but no value
      */
     if((strlen(b) - 1) == strcspn(b,SEP)){
@@ -205,7 +210,7 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
 
     /**
-     * we allow to have only one separator in line
+     * We allow to have only one separator in line
      */
     sepc = LRC_charCount(b, SEP);
     if(sepc > 1){
@@ -214,10 +219,13 @@ int LRC_parseFile(FILE* read, char* SEP, char* COMM, LRC_configNamespace* config
     }
     
     /**
-     * ok, now we are prepared
+     * Ok, now we are prepared
      */     
     c = LRC_trim(strtok(b,SEP));
 
+    /**
+     * Check if variable is allowed
+     */
     if(LRC_checkName(c, ct, numCT) < 0){
       LRC_configError(j,E_UNKNOWN_VAR); 
       goto failure;
@@ -287,6 +295,9 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
   return opts;
 }
 
+/**
+ * Checks if variable is allowed
+ */
 int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
    
   int i = 0, count = 0;
@@ -405,5 +416,84 @@ int LRC_isAllowed(int c){
 int LRC_convertTypes(){
 
 
+  return 0;
+}
 
+int LRC_H5parse(){
+  H5open();
+  H5close();
+  return 0;
+}
+
+/* Write config values to hdf file */
+void LRC_H5writeConfig(hid_t file, LRC_configNamespace* cs, int allopts){
+
+  hid_t group, dataset, dataspace, memspace;
+  hid_t cc_tid;
+  hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
+  herr_t status;
+  int i = 0, k = 0;
+
+  LRC_configOptions ccd;
+
+  group = H5Gcreate(file, "/config", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+ 
+  /* Create compound datatype */
+  cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
+  hid_t name_dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(name_dt, MAX_NAME_LENGTH);
+
+  hid_t value_dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(value_dt, MAX_VALUE_LENGTH);
+
+  H5Tinsert(cc_tid, "name", HOFFSET(LRC_configOptions, name), name_dt);
+  H5Tinsert(cc_tid, "value", HOFFSET(LRC_configOptions, value), value_dt);
+  H5Tinsert(cc_tid, "type", HOFFSET(LRC_configOptions, type), H5T_NATIVE_INT);
+
+  for(i = 0; i < allopts; i++){
+    
+    dims[0] = cs[i].num;
+    dims[1] = 1;
+    dataspace = H5Screate_simple(1, dims, NULL);
+    
+    dataset = H5Dcreate(group, cs[i].space,cc_tid, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    /* Write config data one by one in given namespace */
+    for(k = 0; k < dims[0]; k++){
+      
+      offset[0] = k; 
+      offset[1] = 0;
+      
+      dimsm[0] = 1; 
+      dimsm[1] = 1;
+      
+      count[0] = 1; 
+      count[1] = 1;
+      
+      stride[0] = 1;
+      stride[1] = 1;
+
+      memspace = H5Screate_simple(1, dimsm, NULL);
+      status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
+
+      strcpy(ccd.name,cs[i].options[k].name);
+      strcpy(ccd.value,cs[i].options[k].value);
+      ccd.type = cs[i].options[k].type;
+
+  //    printf("ccd[name] = %s\t ccd[value] = %s\n", ccd.name, ccd.value);
+
+      status = H5Dwrite(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, &ccd);
+
+      status = H5Sclose(memspace);
+    }
+
+    status = H5Dclose(dataset);
+    status = H5Sclose(dataspace);
+  }
+
+
+  status = H5Gclose(group);
+  status = H5Tclose(cc_tid);
+
+  return;
 }

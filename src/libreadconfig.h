@@ -1,6 +1,16 @@
 #ifndef LIBREADCONFIG_H
 #define LIBREADCONFIG_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <string.h>
+#include "hdf5.h"
+
 #define MAX_LINE_LENGTH 1024
 #define MAX_CONFIG_SIZE 1024
 #define MAX_NAME_LENGTH 256
@@ -35,20 +45,15 @@ typedef struct {
 
 /* Assgin types */
 typedef struct {
+  char space[MAX_NAME_LENGTH];
   char name[MAX_NAME_LENGTH];
   int type;
 } LRC_configTypes;
 
-void LRC_configError(int, char*);
-char* LRC_trim(char*);
-char* LRC_nameTrim(char*);
-int LRC_charCount(char*, char*);
 int LRC_parseFile(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
 void LRC_printAll(int, LRC_configNamespace*);
 int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
-int LRC_matchType(char*, char*, LRC_configTypes*, int numCT);
-int LRC_checkType(char*, int);
-int LRC_isAllowed(int);
-int LRC_checkName(char*, LRC_configTypes*, int numCT);
+void LRC_H5writeConfig(hid_t, LRC_configNamespace*, int);
+int LRC_H5parse();
 
 #endif

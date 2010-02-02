@@ -12,7 +12,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "libreadconfig.h"
-
+#include "hdf5.h"
 
 int main(int argc, char* argv[]){
 
@@ -26,16 +26,16 @@ int main(int argc, char* argv[]){
 
   LRC_configNamespace cs[50];
 
-  LRC_configTypes ct[] = {
-    {"inidata", LRC_CHAR},
-    {"fs", LRC_CHAR},
-    {"nprocs", LRC_INT},
-    {"bodies", LRC_INT},
-    {"dump", LRC_INT},
-    {"period", LRC_DOUBLE},
-    {"epoch", LRC_FLOAT},
-    {"xres", LRC_INT},
-    {"yres", LRC_INT}
+  LRC_configTypes ct[9] = {
+    {"default", "inidata", LRC_CHAR},
+    {"default", "fs", LRC_CHAR},
+    {"default", "nprocs", LRC_INT},
+    {"default", "bodies", LRC_INT},
+    {"logs", "dump", LRC_INT},
+    {"logs", "period", LRC_DOUBLE},
+    {"logs", "epoch", LRC_FLOAT},
+    {"farm", "xres", LRC_INT},
+    {"farm", "yres", LRC_INT}
   };
   int numCT = 9;
 	
@@ -98,5 +98,15 @@ int main(int argc, char* argv[]){
 
   }
 	printf("\n");
-	return 0;
+
+  hid_t file;
+
+  file = H5Fcreate("h5config.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  
+  LRC_H5writeConfig(file, cs, opts);
+  
+  H5Fclose(file);
+	
+  return 0;
 }
+

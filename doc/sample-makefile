@@ -1,6 +1,6 @@
 NAME = readconfig
 CC = gcc
-CCFLAGS = -Wall
+CCFLAGS = -Wall -lhdf5
 RM = rm -vf
 
 all: demo main
