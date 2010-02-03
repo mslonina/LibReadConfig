@@ -1,0 +1,49 @@
+\hypertarget{libreadconfig_8c}{
+\subsection{/home/mariusz/DOKTORAT/CODE/LibReadConfig/src/libreadconfig.c File Reference}
+\label{libreadconfig_8c}\index{/home/mariusz/DOKTORAT/CODE/LibReadConfig/src/libreadconfig.c@{/home/mariusz/DOKTORAT/CODE/LibReadConfig/src/libreadconfig.c}}
+}
+Functions fro reading/writing config files.  
+
+
+{\tt \#include \char`\"{}libreadconfig.h\char`\"{}}\par
+\subsubsection*{Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{group___l_r_c__internals_g0768167abe6a143840f26439a86ec79d}{LRC\_\-configError} (int, char $\ast$)
+\begin{CompactList}\small\item\em Prints error messages. \item\end{CompactList}\item 
+char $\ast$ \hyperlink{group___l_r_c__internals_g01c101649d6e132e1098711f84023ce7}{LRC\_\-trim} (char $\ast$)
+\begin{CompactList}\small\item\em Remove leading, trailing, \& excess embedded spaces. \item\end{CompactList}\item 
+char $\ast$ \hyperlink{group___l_r_c__internals_g713edeb31c0d15e409403be5a5f28ad8}{LRC\_\-nameTrim} (char $\ast$)
+\begin{CompactList}\small\item\em Check namespace name and trim it. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__internals_gadc8707a894b997457d320923c940721}{LRC\_\-charCount} (char $\ast$, char $\ast$)
+\begin{CompactList}\small\item\em Count the number of separators in the current line. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__internals_g4b2785b5ee9a3ab984c9dcfd3f9b3283}{LRC\_\-matchType} (char $\ast$, char $\ast$, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$, int)
+\begin{CompactList}\small\item\em Match input type. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__internals_g727eec2e862e3acf7206d11cd2636127}{LRC\_\-checkType} (char $\ast$, int)
+\begin{CompactList}\small\item\em Check type of the value. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__internals_g6ac7bc617b346047519f4c3589a311bd}{LRC\_\-isAllowed} (int)
+\begin{CompactList}\small\item\em Check if given char is one of the allowed chars. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__internals_g40dad9664f69eed3491f5753db5a76b0}{LRC\_\-checkName} (char $\ast$, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$, int)
+\begin{CompactList}\small\item\em Checks if variable is allowed. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__parser_g4b1c98d54591fd4d05cc1caee09cbd35}{LRC\_\-textParser} (FILE $\ast$read, char $\ast$SEP, char $\ast$COMM, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$configSpace, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$ct, int numCT)
+\begin{CompactList}\small\item\em Reads config file, namespaces, variable names and values, into the options structure. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__parser_g3cbf6e172a98da00ec8fd0b301b4b8f9}{LRC\_\-hdfParser} (hid\_\-t file, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$cs, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$ct, int numCT)
+\begin{CompactList}\small\item\em Parse config data stored in HDF5 files. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g51e21668c4d2e0f397b7d20ac8b9cc50}{LRC\_\-writeConfig} (char $\ast$file, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$ct, int opts)
+\begin{CompactList}\small\item\em Write config file. Wrapper for. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g42c90a023c4cc3048b39a65245e889e4}{LRC\_\-writeTextConfig} (FILE $\ast$, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$ct, int opts)
+\begin{CompactList}\small\item\em Write ASCII config file. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g142e285d5c8a3e6761d1a86668cfe9eb}{LRC\_\-writeHdfConfig} (hid\_\-t file, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$cs, int allopts)
+\begin{CompactList}\small\item\em Write config values to hdf file. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g434aa10adcbb1572b06ed29b01187716}{LRC\_\-printAll} (int n, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$configSpace)
+\begin{CompactList}\small\item\em Prints all options. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__wrappers_g98adf1a77ae325830d4521b691ca33b0}{LRC\_\-parseConfigFile} (char $\ast$inif, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$configSpace, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$ct, int numCT)
+\begin{CompactList}\small\item\em Wrapper function. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsubsection{Detailed Description}
+Functions fro reading/writing config files. 
+
+
+
+Definition in file \hyperlink{libreadconfig_8c-source}{libreadconfig.c}.

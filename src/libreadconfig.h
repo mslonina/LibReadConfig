@@ -1,6 +1,11 @@
 #ifndef LIBREADCONFIG_H
 #define LIBREADCONFIG_H
 
+/**
+ * @file
+ * @brief LibreadConfig public library.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,35 +17,82 @@
 #include "hdf5.h"
 
 /**
- * Predefined constants.
+ * @def LRC_MAX_LINE_LENGTH
+ * @brief Maximum line length in the config file.
+ *
+ * @def LRC_MAX_CONFIG_SIZE
+ * @brief Maximum number of lines in the config file.
+ *
+ * @def LRC_MAX_SPACE_LENGTH
+ * @brief Maximum length of the namespace.
+ * 
+ * @def LRC_MAX_NAME_LENGTH
+ * @brief Maximum length of the variable name.
+ * 
+ * @def LRC_MAX_VALUE_LENGTH
+ * @brief Maximum length of the value.
+ * 
+ * @def LRC_MAX_OPTIONS_NUM
+ * @brief Maximum variables in given namespace.
+ * 
+ * @def LRC_CONFIG_GROUP
+ * @brief Name of the config file group in HDF
+ * 
+ * @def LRC_NULL
+ * @brief Null character for trimming.
  */
-#define MAX_LINE_LENGTH 1024
-#define MAX_CONFIG_SIZE 1024
-#define MAX_SPACE_LENGTH 256
-#define MAX_NAME_LENGTH 256
-#define MAX_VALUE_LENGTH 256
-#define MAX_OPTIONS_NUM 50
-#define CONFIG_GROUP "config"
+#define LRC_MAX_LINE_LENGTH 1024
+#define LRC_MAX_CONFIG_SIZE 1024
+#define LRC_MAX_SPACE_LENGTH 256
+#define LRC_MAX_NAME_LENGTH 256
+#define LRC_MAX_VALUE_LENGTH 256
+#define LRC_MAX_OPTIONS_NUM 50
+#define LRC_CONFIG_GROUP "config"
+#define LRC_NULL '\0'
 
 /**
- * Error messages.
+ * @def LRC_E_CONFIG_SYNTAX
+ * @brief Main message for config syntax error. 
+ * 
+ * @def LRC_E_MISSING_VAR
+ * @brief Message for missing variable error.
+ * 
+ * @def LRC_E_MISSING_VAL
+ * @brief Message for missing value error.
+ * 
+ * @def LRC_E_MISSING_SEP
+ * @brief Message for missing separator error.
+ * 
+ * @def LRC_E_MISSING_BRACKET
+ * @brief Message for namespace error.
+ * 
+ * @def LRC_E_TOOMANY_SEP
+ * @brief Message for toomany separators error.
+ * 
+ * @def LRC_E_WRONG_INPUT
+ * @brief Message for wrong user input.
+ *
+ * @def LRC_E_UNKNOWN_VAR
+ * @brief Message for unknown variable error.
  */
-#define E_CONFIG_SYNTAX "Config file syntax error."
-#define E_MISSING_VAR "Missing variable name."
-#define E_MISSING_VAL "Missing value."
-#define E_MISSING_SEP "Missing separator."
-#define E_MISSING_BRACKET "Missing bracket in namespace."
-#define E_TOOMANY_SEP "To many separators."
-#define E_WRONG_INPUT "Wrong input value type."
-#define E_UNKNOWN_VAR "Unknown variable."
+#define LRC_E_CONFIG_SYNTAX "Config file syntax error."
+#define LRC_E_MISSING_VAR "Missing variable name."
+#define LRC_E_MISSING_VAL "Missing value."
+#define LRC_E_MISSING_SEP "Missing separator."
+#define LRC_E_MISSING_BRACKET "Missing bracket in namespace."
+#define LRC_E_TOOMANY_SEP "To many separators."
+#define LRC_E_WRONG_INPUT "Wrong input value type."
+#define LRC_E_UNKNOWN_VAR "Unknown variable."
 
 /**
- * Datatypes.
+ * @enum datatypes
+ * @brief List of datatypes. More may be added in the future.
  */
-enum{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR }; 
+enum datatypes{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR } types; 
 
 /**
- * Options struct.
+ * @struct LRC_configOptions
+ * @brief Options struct.
  *
  * @param char
  *   The name of the variable.
@@ -52,13 +104,14 @@ enum{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR };
  *   The type of the variable.
  */
 typedef struct {
-  char name[MAX_NAME_LENGTH];
-  char value[MAX_VALUE_LENGTH];
+  char name[LRC_MAX_NAME_LENGTH];
+  char value[LRC_MAX_VALUE_LENGTH];
   int type;
 } LRC_configOptions;
 
 /**
- * Namespace struct.
+ * @struct LRC_configNamespace
+ * @brief Namespace struct.
  *
  * @param char 
  *   The name of the namespace.
@@ -70,13 +123,14 @@ typedef struct {
  *   The number of options read for given config options struct.
  */
 typedef struct {
-  char space[MAX_SPACE_LENGTH];
-  LRC_configOptions options[MAX_OPTIONS_NUM];
+  char space[LRC_MAX_SPACE_LENGTH];
+  LRC_configOptions options[LRC_MAX_OPTIONS_NUM];
   int num;
 } LRC_configNamespace;
 
 /**
- * Assign types.
+ * @struct LRC_configTypes
+ * @brief Allowed types.
  * 
  * @param char
  *   The namespace name.
@@ -88,8 +142,8 @@ typedef struct {
  *   The type of the value.
  */
 typedef struct {
-  char space[MAX_SPACE_LENGTH];
-  char name[MAX_NAME_LENGTH];
+  char space[LRC_MAX_SPACE_LENGTH];
+  char name[LRC_MAX_NAME_LENGTH];
   int type;
 } LRC_configTypes;
 
@@ -98,9 +152,7 @@ typedef struct {
  */
 int LRC_textParser(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
 int LRC_hdfParser(hid_t, LRC_configNamespace*, LRC_configTypes*, int);
-
 int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
-
 void LRC_printAll(int, LRC_configNamespace*);
 void LRC_writeHdfConfig(hid_t, LRC_configNamespace*, int);
 void LRC_writeTextConfig(FILE*, char*, char*, LRC_configNamespace*, int);

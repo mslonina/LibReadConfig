@@ -1,0 +1,23 @@
+\hypertarget{sample-makefile-example}{
+\subsection{sample-makefile}
+}
+
+
+\begin{DocInclude}\begin{verbatim}NAME = readconfig
+CC = gcc
+CCFLAGS = -Wall -lhdf5
+RM = rm -vf
+
+all: demo main
+
+demo:
+        $(CC) $(CCFLAGS) -c sample-readconfig.c -o sample-readconfig.o
+
+main:
+        $(CC) $(CCFLAGS) -o $(NAME) sample-readconfig.o -lreadconfig 
+
+clean:
+        $(RM) $(NAME) *.o *.a 
+\end{verbatim}
+\end{DocInclude}
+ 

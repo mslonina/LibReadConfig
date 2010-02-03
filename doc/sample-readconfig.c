@@ -1,3 +1,12 @@
+/**
+ * @file
+ * @brief This is a sample file for using LibReadConfig.
+ *
+ * Using LibReadConfig is as simple as possible. This example will show you
+ * how to do that.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,18 +20,59 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <string.h>
+
+/**
+ * Include LibReadConfig
+ */
 #include "libreadconfig.h"
+
+/**
+ * Include HDF5 library
+ */
 #include "hdf5.h"
 
 int main(int argc, char* argv[]){
 
-	char* inif; char* sep = "="; char* comm = "#"; 
-	int nprocs = 0; int nbody = 0; int dump = 0;
-	int k = 0;
-	float period = 0.0, epoch = 0.0;
+/**
+ * @var char* inif
+ * @brief Config file name.
+ *
+ * @var char* sep
+ * @brief Separator mark.
+ *
+ * @var char* comm
+ * @brief Comment mark.
+ *
+ * @var LRC_configNamespace cs[50]
+ * @brief Define maximum number of namespaces.
+ *
+ * @var LRC_configNamespace cc[50]
+ * @brief Define maximum number of namespaces (for HDF purpose).
+ *
+ * @var LRC_configTypes cs[9]
+ * @brief Define allowable datatypes.
+ *
+ * @var int numCT
+ * @brief Number of allowed datatypes (the same as number of elements in cs, @see cs).
+ */
+  
+	char* inif; 
+  hid_t file;
+  char* sep = "=";
+  char* comm = "#";
+
+	int nprocs = 0;
+  int nbody = 0;
+  int dump = 0;
+	float period = 0.0;
+  float epoch = 0.0;
+  int xres = 0;
+  int yres = 0;
 	
-	int i = 0, opts = 0, h5opts = 0;
-  int xres = 0; int yres = 0;
+  int k = 0;
+	int i = 0;
+  int opts = 0;
+  int h5opts = 0;
 
   LRC_configNamespace cs[50];
   LRC_configNamespace cc[50];
@@ -41,17 +91,41 @@ int main(int argc, char* argv[]){
   int numCT = 9;
 	
   inif = "sample-config"; //input file
-	printf("\n");
+	
+  printf("\n");
+  
+  //Read config file. LRC will return number of namespaces.
   opts = LRC_parseConfigFile(inif, sep, comm, cs, ct, numCT);
+  
+  //You can handle any errors in the way You like.
   if(opts < 0) exit(1);
 
+  //Here we just print all options using LRC_printAll()
 	printf("\nALL OPTIONS [%d]: \n", opts);
   LRC_printAll(opts, cs);
 
-	/**
-	 * now tricky part -- do some conversions
-	 * you need to handle this by hand
-	 */
+  //Now let us read config file stored in HDF5
+
+  //We create HDF5 file
+  file = H5Fcreate("h5config.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  
+  // Copy config file to hdf5 file
+  LRC_writeHdfConfig(file, cs, opts);
+
+  // Read hdf5 config file
+  h5opts = LRC_hdfParser(file, cc, ct, numCT);
+
+  printf("H5OPTS = %d\n", h5opts);
+  
+  // Print all options
+  LRC_printAll(h5opts, cc);
+ 
+  //Finally, we release resources.
+  H5Fclose(file);
+	
+	// The tricky part is to do some conversions.
+	// You need to handle this by hand, because we don't know
+  // what variables You use. 
 	printf("\nCONVERTED OPTIONS:\n");
 	for(i = 0; i < opts; i++){
     if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
@@ -71,9 +145,7 @@ int main(int argc, char* argv[]){
     }
 
 
-	/**
-	 * here we just print options 
-	 */
+	 // Here we just print options.
     if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
 		printf("Namespace [%s]:\n",cs[i].space);
 		for(k = 0; k < cs[i].num; k++){
@@ -100,22 +172,6 @@ int main(int argc, char* argv[]){
   }
 	printf("\n");
 
-  hid_t file;
-
-  file = H5Fcreate("h5config.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  
-  /* Copy config file to hdf5 file */
-  LRC_writeHdfConfig(file, cs, opts);
-
-  /* Read hdf5 config file */
-  h5opts = LRC_hdfParser(file, cc, ct, numCT);
-
-  printf("H5OPTS = %d\n", h5opts);
-  /* Print all options*/
-  LRC_printAll(h5opts, cc);
-  
-  H5Fclose(file);
-	
   return 0;
 }
 

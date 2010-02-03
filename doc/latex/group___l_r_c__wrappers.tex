@@ -1,0 +1,128 @@
+\hypertarget{group___l_r_c__wrappers}{
+\subsection{Wrappers}
+\label{group___l_r_c__wrappers}\index{Wrappers@{Wrappers}}
+}
+\subsubsection*{Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{group___l_r_c__wrappers_g51e21668c4d2e0f397b7d20ac8b9cc50}{LRC\_\-writeConfig} (char $\ast$file, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$ct, int opts)
+\begin{CompactList}\small\item\em Write config file. Wrapper for. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g42c90a023c4cc3048b39a65245e889e4}{LRC\_\-writeTextConfig} (FILE $\ast$, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$ct, int opts)
+\begin{CompactList}\small\item\em Write ASCII config file. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g142e285d5c8a3e6761d1a86668cfe9eb}{LRC\_\-writeHdfConfig} (hid\_\-t file, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$cs, int allopts)
+\begin{CompactList}\small\item\em Write config values to hdf file. \item\end{CompactList}\item 
+void \hyperlink{group___l_r_c__wrappers_g434aa10adcbb1572b06ed29b01187716}{LRC\_\-printAll} (int n, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$configSpace)
+\begin{CompactList}\small\item\em Prints all options. \item\end{CompactList}\item 
+int \hyperlink{group___l_r_c__wrappers_g98adf1a77ae325830d4521b691ca33b0}{LRC\_\-parseConfigFile} (char $\ast$inif, char $\ast$sep, char $\ast$comm, \hyperlink{struct_l_r_c__config_namespace}{LRC\_\-configNamespace} $\ast$configSpace, \hyperlink{struct_l_r_c__config_types}{LRC\_\-configTypes} $\ast$ct, int numCT)
+\begin{CompactList}\small\item\em Wrapper function. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsubsection{Detailed Description}
+Wrapper functions for reading/writing config files. 
+
+\subsubsection{Function Documentation}
+\hypertarget{group___l_r_c__wrappers_g98adf1a77ae325830d4521b691ca33b0}{
+\index{LRC\_\-wrappers@{LRC\_\-wrappers}!LRC\_\-parseConfigFile@{LRC\_\-parseConfigFile}}
+\index{LRC\_\-parseConfigFile@{LRC\_\-parseConfigFile}!LRC_wrappers@{LRC\_\-wrappers}}
+\paragraph[{LRC\_\-parseConfigFile}]{\setlength{\rightskip}{0pt plus 5cm}int LRC\_\-parseConfigFile (char $\ast$ {\em inif}, \/  char $\ast$ {\em sep}, \/  char $\ast$ {\em comm}, \/  {\bf LRC\_\-configNamespace} $\ast$ {\em configSpace}, \/  {\bf LRC\_\-configTypes} $\ast$ {\em ct}, \/  int {\em numCT})}\hfill}
+\label{group___l_r_c__wrappers_g98adf1a77ae325830d4521b691ca33b0}
+
+
+Wrapper function. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inif}]Name of the config file to read.\item[{\em sep}]The separator.\item[{\em comm}]The comment mark.\item[{\em configSpace}]Pointer to config data structure.\item[{\em ct}]Pointer to allowed datatypes structure.\item[{\em numCT}]Number of allowed datatypes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Number of namespaces found in the config file on success, -1 otherwise.\end{Desc}
+\begin{Desc}
+\item[\hyperlink{todo__todo000008}{Todo}]HDF5 file handling. \end{Desc}
+\begin{Desc}
+\item[Examples: ]\par
+\hyperlink{sample-readconfig_8c-example}{sample-readconfig.c}.\end{Desc}
+
+
+Definition at line 775 of file libreadconfig.c.\hypertarget{group___l_r_c__wrappers_g434aa10adcbb1572b06ed29b01187716}{
+\index{LRC\_\-wrappers@{LRC\_\-wrappers}!LRC\_\-printAll@{LRC\_\-printAll}}
+\index{LRC\_\-printAll@{LRC\_\-printAll}!LRC_wrappers@{LRC\_\-wrappers}}
+\paragraph[{LRC\_\-printAll}]{\setlength{\rightskip}{0pt plus 5cm}void LRC\_\-printAll (int {\em n}, \/  {\bf LRC\_\-configNamespace} $\ast$ {\em configSpace})}\hfill}
+\label{group___l_r_c__wrappers_g434aa10adcbb1572b06ed29b01187716}
+
+
+Prints all options. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n}]Number of options. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[See also:]\hyperlink{group___l_r_c__parser_g4b1c98d54591fd4d05cc1caee09cbd35}{LRC\_\-textParser()} 
+
+\hyperlink{group___l_r_c__parser_g3cbf6e172a98da00ec8fd0b301b4b8f9}{LRC\_\-hdfParser()}\end{Desc}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em configSpace}]Pointer to the structure with config data. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[See also:]\hyperlink{group___l_r_c__parser_g4b1c98d54591fd4d05cc1caee09cbd35}{LRC\_\-textParser()} 
+
+\hyperlink{group___l_r_c__parser_g3cbf6e172a98da00ec8fd0b301b4b8f9}{LRC\_\-hdfParser()} \end{Desc}
+\begin{Desc}
+\item[Examples: ]\par
+\hyperlink{sample-readconfig_8c-example}{sample-readconfig.c}.\end{Desc}
+
+
+Definition at line 730 of file libreadconfig.c.\hypertarget{group___l_r_c__wrappers_g51e21668c4d2e0f397b7d20ac8b9cc50}{
+\index{LRC\_\-wrappers@{LRC\_\-wrappers}!LRC\_\-writeConfig@{LRC\_\-writeConfig}}
+\index{LRC\_\-writeConfig@{LRC\_\-writeConfig}!LRC_wrappers@{LRC\_\-wrappers}}
+\paragraph[{LRC\_\-writeConfig}]{\setlength{\rightskip}{0pt plus 5cm}void LRC\_\-writeConfig (char $\ast$ {\em file}, \/  char $\ast$ {\em s}, \/  char $\ast$ {\em l}, \/  {\bf LRC\_\-configNamespace} $\ast$ {\em ct}, \/  int {\em opts})}\hfill}
+\label{group___l_r_c__wrappers_g51e21668c4d2e0f397b7d20ac8b9cc50}
+
+
+Write config file. Wrapper for. 
+
+\begin{Desc}
+\item[See also:]\hyperlink{group___l_r_c__wrappers_g42c90a023c4cc3048b39a65245e889e4}{LRC\_\-writeTextConfig()} and 
+
+\hyperlink{group___l_r_c__wrappers_g142e285d5c8a3e6761d1a86668cfe9eb}{LRC\_\-writeHdfConfig()}\end{Desc}
+\begin{Desc}
+\item[\hyperlink{todo__todo000006}{Todo}]This function is to be written. \end{Desc}
+
+
+Definition at line 616 of file libreadconfig.c.\hypertarget{group___l_r_c__wrappers_g142e285d5c8a3e6761d1a86668cfe9eb}{
+\index{LRC\_\-wrappers@{LRC\_\-wrappers}!LRC\_\-writeHdfConfig@{LRC\_\-writeHdfConfig}}
+\index{LRC\_\-writeHdfConfig@{LRC\_\-writeHdfConfig}!LRC_wrappers@{LRC\_\-wrappers}}
+\paragraph[{LRC\_\-writeHdfConfig}]{\setlength{\rightskip}{0pt plus 5cm}void LRC\_\-writeHdfConfig (hid\_\-t {\em file}, \/  {\bf LRC\_\-configNamespace} $\ast$ {\em cs}, \/  int {\em allopts})}\hfill}
+\label{group___l_r_c__wrappers_g142e285d5c8a3e6761d1a86668cfe9eb}
+
+
+Write config values to hdf file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em file}]The handler of the file.\item[{\em cs}]Pointer to the structure with config values.\item[{\em allopts}]Number of namespaces in the config structure. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Examples: ]\par
+\hyperlink{sample-readconfig_8c-example}{sample-readconfig.c}.\end{Desc}
+
+
+Definition at line 645 of file libreadconfig.c.\hypertarget{group___l_r_c__wrappers_g42c90a023c4cc3048b39a65245e889e4}{
+\index{LRC\_\-wrappers@{LRC\_\-wrappers}!LRC\_\-writeTextConfig@{LRC\_\-writeTextConfig}}
+\index{LRC\_\-writeTextConfig@{LRC\_\-writeTextConfig}!LRC_wrappers@{LRC\_\-wrappers}}
+\paragraph[{LRC\_\-writeTextConfig}]{\setlength{\rightskip}{0pt plus 5cm}void LRC\_\-writeTextConfig (FILE $\ast$, \/  char $\ast$ {\em sep}, \/  char $\ast$ {\em comm}, \/  {\bf LRC\_\-configNamespace} $\ast$ {\em ct}, \/  int {\em opts})}\hfill}
+\label{group___l_r_c__wrappers_g42c90a023c4cc3048b39a65245e889e4}
+
+
+Write ASCII config file. 
+
+\begin{Desc}
+\item[\hyperlink{todo__todo000007}{Todo}]This function is to be written. \end{Desc}
+
+
+Definition at line 627 of file libreadconfig.c.
