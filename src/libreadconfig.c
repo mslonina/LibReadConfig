@@ -1,7 +1,11 @@
 /**
+ * @mainpage
  * LibReadConfig -- config file parser
- * mariusz slonina <mariusz.slonina@gmail.com>
- * (c) 2009 - 2010
+ *
+ * @version 0.12
+ *
+ * @author mariusz slonina <mariusz.slonina@gmail.com>
+ * @date 2010
  */
 #include "libreadconfig.h"
 
