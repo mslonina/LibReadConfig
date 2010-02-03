@@ -1,13 +1,12 @@
 /**
- * ReadConfig -- config file parser
+ * LibReadConfig -- config file parser
  * mariusz slonina <mariusz.slonina@gmail.com>
- * last modified: 05/01/2010
  * (c) 2009 - 2010
  */
 #include "libreadconfig.h"
 
 /**
- * Internal functions
+ * Internals
  */
 void LRC_configError(int, char*);
 char* LRC_trim(char*);
@@ -19,49 +18,48 @@ int LRC_isAllowed(int);
 int LRC_checkName(char*, LRC_configTypes*, int numCT);
 
 /**
- * configError(
- *  int j
- *  char *m
- *  )
+ * Prints error messages.
+ * 
+ * @param int j
+ *   The line in the config file where the error exist.
  *
- * prints errors (m) in config file with number of line j
+ * @param char* m
+ *   Error message to print.
+ * 
  */
-void LRC_configError(int j,char *m){
+void LRC_configError(int j,char* m){
   
   printf("%s\nLine %d: %s\n", E_CONFIG_SYNTAX, j, m);
 
 }
 
 /**
- *  TRIM.C - Remove leading, trailing, & excess embedded spaces
+ *  Remove leading, trailing, & excess embedded spaces
  *
- *  public domain by Bob Stout
+ *  Public domain by Bob Stout
  *  http://www.cs.umu.se/~isak/snippets/trim.c
+ *
+ *  @param char* str
+ *    String to trim.
  */
 
 #define NUL '\0'
 
-char* LRC_trim(char *str){
+char* LRC_trim(char* str){
 
   char *ibuf = str, *obuf = str;
   int i = 0, cnt = 0;
 
-  /**
-   *  Trap NULL
-   */
+  // Trap NULL
   if (str){
  
-    /**
-     *  Remove leading spaces (from RMLEAD.C)
-     */
+    // Remove leading spaces (from RMLEAD.C)
     for (ibuf = str; *ibuf && isspace(*ibuf); ++ibuf)
       ;
     if (str != ibuf)
       memmove(str, ibuf, ibuf - str);
 
-    /**
-     *  Collapse embedded spaces (from LV1WS.C)
-     */
+    // Collapse embedded spaces (from LV1WS.C)
     while (*ibuf){
       if (isspace(*ibuf) && cnt) ibuf++;
         else{
@@ -75,9 +73,7 @@ char* LRC_trim(char *str){
           }
           obuf[i] = NUL;
 
-    /**
-     *  Remove trailing spaces (from RMTRAIL.C)
-     */
+     // Remove trailing spaces (from RMTRAIL.C)
      while (--i >= 0) { if (!isspace(obuf[i])) break;}
      obuf[++i] = NUL;
     }
@@ -86,7 +82,13 @@ char* LRC_trim(char *str){
 }
 
 /**
- * Check namespace and trim it
+ * Check namespace name and trim it.
+ *
+ * @param char* l
+ *   Name of the namespace.
+ *
+ * @return
+ *   Trimmed name of the namespace.
  */
 char* LRC_nameTrim(char* l){
 
@@ -94,7 +96,7 @@ char* LRC_nameTrim(char* l){
 
   len = strlen(l);
 
-  /* Quick and dirty solution using trim function above */  
+  // Quick and dirty solution using trim function above
   l[0] = ' ';
   l[len-1] = ' ';
   l = LRC_trim(l);  
@@ -103,9 +105,18 @@ char* LRC_nameTrim(char* l){
 }
 
 /**
- * Count the number of separators in line
+ * Count the number of separators in current line.
+ *
+ * @param char* l
+ *   Current line.
+ *
+ * @param char* s
+ *   The separator to count.
+ *
+ * @return
+ *   Number of separators in current line.
  */
-int LRC_charCount(char *l, char* s){
+int LRC_charCount(char* l, char* s){
   
   int i = 0; int sep = 0; int len = 0; 
 
@@ -119,18 +130,34 @@ int LRC_charCount(char *l, char* s){
 }
 
 /**
- * CONFIG FILE PARSER
- */
-
-/**
- * textParser (
- *  FILE* read, 
- *  char* SEP, 
- *  char* COMM
- *  )
+ *  Text parser
  *
- * reads config namespaces, vars names and values into global options structure
- * and returns number of config vars, or -1 on failure
+ *  Reads config file -- namespaces, variable names and values -- into options
+ *  structure.
+ *
+ *  @param FILE* read
+ *    Handler of the config file to read.
+ *    
+ *  @param char* SEP 
+ *    The separator name/value.
+ *
+ *  @param char* COMM
+ *    The comment mark.
+ *
+ *  @param LRC_configNamespace*
+ *    The structure with config file data.
+ *
+ *  @param LRC_configTypes*
+ *    The structure with datatypes allowed in the config file.
+ *
+ *  @param int
+ *    The number of datatypes allowed in the config file.
+ *
+ *  @return
+ *    Number of config variables, or -1 on failure.
+ *
+ *  @todo
+ *    Check if namespace is allowed.
  */
 int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
@@ -139,46 +166,34 @@ int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* confi
   int ret = 0; int err = 0;
 
   while(n < MAX_CONFIG_SIZE){
-        
-    j++; //count lines
+    
+    // Count lines
+    j++; 
   
     if((feof(read) != 0)) break;
     line = fgets(l, MAX_LINE_LENGTH, read);
     
-    /**
-     * Skip blank lines and any NULL
-     */
+    // Skip blank lines and any NULL
     if (line == NULL) break;
     if (line[0] == '\n') continue;
     
-    /**
-     * Now we have to trim leading and trailing spaces etc.
-     */
+    // Now we have to trim leading and trailing spaces etc.
     line = LRC_trim(line);
 
-    /**
-     * Check for full line comments and skip them
-     */
+    // Check for full line comments and skip them
     if (strspn(line, COMM) > 0) continue;
     
-    /**
-     * Check for separator at the begining
-     */
+    // Check for the separator at the begining
     if (strspn(line, SEP) > 0){
       LRC_configError(j,E_MISSING_VAR); 
       goto failure;
     }
 
-    /**
-     * First split var/value and inline comments
-     * Trim leading and trailing spaces
-     */
+    // First split var/value and inline comments
+    // Trim leading and trailing spaces
     b = LRC_trim(strtok(line,COMM));
 
-    /**
-     * Check for namespaces
-     * TODO: check if namespace is allowed
-     */
+    // Check for namespaces
     if (b[0] == '['){
       if(b[strlen(b)-1] != ']'){
         LRC_configError(j,E_MISSING_BRACKET); 
@@ -192,40 +207,30 @@ int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* confi
       continue;
     }
   
-    /**
-     * Check if in the var/value string the separator exist
-     */
+    // Check if in the var/value string the separator exist
     if(strstr(b,SEP) == NULL){
       LRC_configError(j,E_MISSING_SEP); 
       goto failure;
     }
     
-    /**
-     * Check some special case:
-     * we have separator, but no value
-     */
+    // Check some special case:
+    // we have separator, but no value
     if((strlen(b) - 1) == strcspn(b,SEP)){
       LRC_configError(j,E_MISSING_VAL); 
       goto failure;
     }
 
-    /**
-     * We allow to have only one separator in line
-     */
+    // We allow to have only one separator in line
     sepc = LRC_charCount(b, SEP);
     if(sepc > 1){
       LRC_configError(j,E_TOOMANY_SEP); 
       goto failure;
     }
     
-    /**
-     * Ok, now we are prepared
-     */     
+    // Ok, now we are prepared
     c = LRC_trim(strtok(b,SEP));
 
-    /**
-     * Check if variable is allowed
-     */
+    // Check if variable is allowed
     if(LRC_checkName(c, ct, numCT) < 0){
       LRC_configError(j,E_UNKNOWN_VAR); 
       goto failure;
@@ -257,10 +262,23 @@ failure:
 }
 
 /**
- * Prints all options
+ * Prints all options.
+ *
+ * @param int
+ *   Number of options.
+ *   @see LRC_textParser()
+ *   @see LRC_hdfParser()
+ *
+ * @param LRC_configNamespace*
+ *   The structure with config data.
+ *   @see LRC_textParser()
+ *   @see LRC_hdfParser()
+ *
  */
 void LRC_printAll(int n, LRC_configNamespace* configSpace){
+ 
   int i = 0; int k = 0;
+  
   for (i = 0; i < n; i++){
 		printf("Namespace [%s]:\n",configSpace[i].space);
     for (k = 0; k < configSpace[i].num; k++){
@@ -275,8 +293,10 @@ void LRC_printAll(int n, LRC_configNamespace* configSpace){
 }
 
 /**
- * Reads config file -- wrapper function
- * Returns number of options, or -1 on failure
+ * Wrapper function.
+ *
+ * @return
+ *    The number of options, or -1 on failure
  */
 int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
   
@@ -296,7 +316,19 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
 }
 
 /**
- * Checks if variable is allowed
+ * Checks if variable is allowed.
+ *
+ * @param char*
+ *   The name of the variable to check.
+ *
+ * @param LRC_configTypes*
+ *   The structure with allowed config datatypes.
+ *
+ * @param int
+ *   The number of allowed config datatypes.
+ *
+ * @return
+ *   Returns 0 on success, -1 on failure.  
  */
 int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
    
@@ -314,7 +346,23 @@ int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
 }
 
 /**
- * Match input type. Returns type (integer value) or -1 on failure 
+ * Match input type.
+ *
+ * @param char*
+ *   Variable name.
+ *
+ * @param char*
+ *   The value of the variable.
+ *
+ * @param LRC_configTypes*
+ *   The structure with allowed config datatypes.
+ *
+ * @param int
+ *   The number of config datatypes allowed.
+ *   
+ * @return
+ *   Returns type (integer value) or -1 on failure.
+ *   @see LRC_configTypes
  */
 int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
   
@@ -336,8 +384,17 @@ int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
 }
 
 /**
- * Check type of the value 
- * Return 0 if the type is correct, -1 otherwise
+ * Check type of the value.
+ *
+ * @param char*
+ *   The value to check.
+ *
+ * @param int
+ *   The datatype for given value
+ *   @see LRC_confgiTypes
+ *
+ * @return
+ *   Return 0 if the type is correct, -1 otherwise.
  */
 int LRC_checkType(char* value, int type){
   
@@ -399,7 +456,18 @@ int LRC_checkType(char* value, int type){
 
 }
 
-/* Check if c is one of the allowed chars */
+/** 
+ * Check if c is one of the allowed chars.
+ *
+ * @param int
+ *   The char to check.
+ *
+ * @return
+ *   Return 0 on succes, -1 otherwise.
+ *
+ * @todo
+ *   Allow user to override allowed char string.
+ */
 int LRC_isAllowed(int c){
 
   char* allowed = "_-. ";
@@ -412,7 +480,31 @@ int LRC_isAllowed(int c){
   return 1;
 }
 
-/* HDF5 parser */
+/**
+ * HDF5 parser 
+ *
+ * Parse config data stored in HDF5 files.
+ *
+ * @param hid_t
+ *   The handler of the file.
+ *
+ * @param LRC_configNamespace*
+ *   The structure to handle config data.
+ *
+ * @param LRC_configTypes*
+ *   The structure with allowed datatypes.
+ *
+ * @param int
+ *   The number of allowed datatypes.
+ *
+ * @return
+ *   Number of read namespaces.
+ *
+ * @todo
+ *   - Type checking.
+ *   - Open rather recreate compound datatype.
+ *
+ */
 int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int numCT){
   
   hid_t group, dataset, dataspace, memspace;
@@ -428,7 +520,7 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
 
   LRC_configOptions rdata[1];
 
-  /* FIXME: [OPEN, NOT CREATE] Create compound datatype */
+  // FIXME: [OPEN, NOT CREATE] Create compound datatype
   cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
   hid_t name_dt = H5Tcopy(H5T_C_S1);
   H5Tset_size(name_dt, MAX_NAME_LENGTH);
@@ -440,33 +532,31 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
   H5Tinsert(cc_tid, "value", HOFFSET(LRC_configOptions, value), value_dt);
   H5Tinsert(cc_tid, "type", HOFFSET(LRC_configOptions, type), H5T_NATIVE_INT);
 
-  /* Open config group */
+  // Open config group
   group = H5Gopen(file, CONFIG_GROUP, H5P_DEFAULT);
 
-  /* Get group info */
+  // Get group info
   info = H5Gget_info(group, &group_info);
 
-  /* Get number of opts (dataspaces) */
+  // Get number of opts (dataspaces)
   opts = group_info.nlinks;
 
-  /* Iterate each dataspace and assign config values */
+  // Iterate each dataspace and assign config values
   for(i = 0; i < opts; i++){
 
-    /* Get name od dataspace -> the namespace */
+    // Get name od dataspace -> the namespace
     link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, link_name, MAX_SPACE_LENGTH, H5P_DEFAULT);
     strcpy(cs[i].space,link_name);
 
-    /* Get size of the table with config data */
+    // Get size of the table with config data
     dataset = H5Dopen(group, cs[i].space, H5P_DEFAULT);
     dataspace = H5Dget_space(dataset);
     H5Sget_simple_extent_dims(dataspace, edims, emaxdims);
 
     cs[i].num = (int)edims[0];
 
-    /**
-     * Now we know how many rows are in data tables. 
-     * Thus, we can read them one by one and assign to cs struct
-     */
+    // Now we know how many rows are in data tables. 
+    // Thus, we can read them one by one and assign to cs struct.
     for(k = 0; k < cs[i].num; k++){
       
       offset[0] = k;
@@ -485,7 +575,7 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
       status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
       status = H5Dread(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, rdata);
 
-      /* Assign values */
+      // Assign values
       strcpy(cs[i].options[k].name, rdata->name);
       strcpy(cs[i].options[k].value, rdata->value);
       cs[i].options[k].type = rdata->type;
@@ -504,7 +594,19 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
   return opts;
 }
 
-/* Write config values to hdf file */
+/**
+ * Write config values to hdf file.
+ * 
+ * @param hid_t
+ *   The handler of the file.
+ *
+ * @param LRC_configNamespace*
+ *   The structure with config values.
+ *
+ * @param int
+ *   Number of namespaces in the config structure.
+ *
+ */
 void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
 
   hid_t group, dataset, dataspace, memspace;
@@ -517,7 +619,7 @@ void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
 
   group = H5Gcreate(file, CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
  
-  /* Create compound datatype */
+  // Create compound datatype
   cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
   hid_t name_dt = H5Tcopy(H5T_C_S1);
   H5Tset_size(name_dt, MAX_NAME_LENGTH);
@@ -537,7 +639,7 @@ void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
     
     dataset = H5Dcreate(group, cs[i].space,cc_tid, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    /* Write config data one by one in given namespace */
+    // Write config data one by one in given namespace
     for(k = 0; k < dims[0]; k++){
       
       offset[0] = k; 
