@@ -18,6 +18,7 @@ autom4te.cache
 !depcomp
 !ltmain.sh
 !Makefile.am
+!Makefile.in
 !configure
 !configure.ac
 !config.h.in
