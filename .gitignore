@@ -18,6 +18,7 @@ autom4te.cache
 !depcomp
 !ltmain.sh
 !Makefile.am
+!configure
 !configure.ac
 !config.h.in
 *.tar.gz
