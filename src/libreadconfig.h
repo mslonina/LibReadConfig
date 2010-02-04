@@ -1,6 +1,9 @@
 #ifndef LIBREADCONFIG_H
 #define LIBREADCONFIG_H
 
+#if HAVE_CONFIG_H
+ #include <config.h>
+#endif
 /**
  * @file
  * @brief LibreadConfig public library.
@@ -14,7 +17,10 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <string.h>
-#include "hdf5.h"
+
+#if HAVE_HDF5_SUPPORT
+  #include "hdf5.h"
+#endif
 
 /**
  * @def LRC_MAX_LINE_LENGTH
@@ -47,8 +53,11 @@
 #define LRC_MAX_NAME_LENGTH 256
 #define LRC_MAX_VALUE_LENGTH 256
 #define LRC_MAX_OPTIONS_NUM 50
-#define LRC_CONFIG_GROUP "config"
 #define LRC_NULL '\0'
+
+#if HAVE_HDF5_SUPPORT
+  #define LRC_CONFIG_GROUP "config"
+#endif
 
 /**
  * @def LRC_E_CONFIG_SYNTAX
@@ -151,10 +160,14 @@ typedef struct {
  * Public API
  */
 int LRC_textParser(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
+
+#if HAVE_HDF5_SUPPORT
 int LRC_hdfParser(hid_t, LRC_configNamespace*, LRC_configTypes*, int);
+void LRC_writeHdfConfig(hid_t, LRC_configNamespace*, int);
+#endif
+
 int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
 void LRC_printAll(int, LRC_configNamespace*);
-void LRC_writeHdfConfig(hid_t, LRC_configNamespace*, int);
 void LRC_writeTextConfig(FILE*, char*, char*, LRC_configNamespace*, int);
 void LRC_writeConfig(char*, char*, char*, LRC_configNamespace*, int);
 

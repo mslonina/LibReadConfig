@@ -481,6 +481,7 @@ failure:
   return -1;
 }
 
+#if HAVE_HDF5_SUPPORT
 /**
  * HDF5 parser 
  * 
@@ -595,6 +596,7 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
   
   return opts;
 }
+#endif
 
 /**
  * @}
@@ -624,10 +626,11 @@ void LRC_writeConfig(char* file, char* sep, char* comm, LRC_configNamespace* ct,
  * @todo
  *   This function is to be written.
  */
-void LRC_writeTextConfig(FILE*, char* sep, char* comm, LRC_configNamespace* ct, int opts){
+void LRC_writeTextConfig(FILE* read, char* sep, char* comm, LRC_configNamespace* ct, int opts){
   return;
 }
 
+#if HAVE_HDF5_SUPPORT
 /**
  * @fn void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts)
  * @brief Write config values to hdf file.
@@ -711,6 +714,7 @@ void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
 
   return;
 }
+#endif
 
 /**
  * @fn void LRC_printAll(int n, LRC_configNamespace* configSpace)

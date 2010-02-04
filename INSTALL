@@ -1,0 +1,5 @@
+./configure
+make
+make install
+
+To enable HDF5 support use --enable-hdf=yes
