@@ -6,7 +6,7 @@
 *.log
 *.scan
 build
-m4/l*
+!m4/l*
 stamp*
 config*
 Makefile*

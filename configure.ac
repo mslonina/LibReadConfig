@@ -6,13 +6,12 @@ AC_INIT([libreadconfig], [0.12], [mariusz.slonina@gmail.com])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_SRCDIR([src/libreadconfig.c])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
+#AC_CONFIG_MACRO_DIR([m4])
 AC_PREFIX_DEFAULT(`pwd`/build)
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
 AC_C_INLINE
 AC_TYPE_SSIZE_T
 LT_INIT
