@@ -11,14 +11,15 @@ stamp*
 config*
 Makefile*
 missing
-aclocal.m4
+!aclocal.m4
 autom4te.cache
-install-sh
-libtool
-depcomp
-ltmain.sh
+!install-sh
+!libtool
+!depcomp
+!ltmain.sh
 !Makefile.am
 !configure.ac
+!config.h.in
 *.tar.gz
 *.tgz
 
