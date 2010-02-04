@@ -21,6 +21,7 @@ autom4te.cache
 !configure
 !configure.ac
 !config.h.in
+!config.sub
 *.tar.gz
 *.tgz
 
