@@ -3,6 +3,8 @@
 *.[oa]
 *.lo
 *.la
+*.log
+*.scan
 build
 m4/l*
 stamp*
@@ -19,3 +21,4 @@ ltmain.sh
 !configure.ac
 *.tar.gz
 *.tgz
+
