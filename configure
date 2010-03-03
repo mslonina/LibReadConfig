@@ -14332,7 +14332,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Checks for HDF5 support.
 # Check whether --enable-hdf was given.
 if test "${enable_hdf+set}" = set; then :
-  enableval=$enable_hdf; hdf=${enableval}
+  enableval=$enable_hdf; hdf=yes
 else
   hdf=no
 fi

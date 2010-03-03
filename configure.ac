@@ -18,7 +18,7 @@ LT_INIT
 AC_PROG_LIBTOOL
 
 # Checks for HDF5 support.
-AC_ARG_ENABLE([hdf], [  --enable-hdf enable hdf5 support], hdf=${enableval}, hdf=no)
+AC_ARG_ENABLE([hdf], [  --enable-hdf enable hdf5 support], hdf=yes, hdf=no)
 
 if test "x${hdf}" = xyes; then
   echo "------------------------------------------------------"
