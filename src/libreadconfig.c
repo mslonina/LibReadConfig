@@ -383,7 +383,7 @@ int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* confi
   
   int i = 0; int j = 0; int sepc = 0; int n = 0;
   char* line; char l[LRC_MAX_LINE_LENGTH]; char* b; char* c;
-  int ret = 0; int err = 0;
+  int ret = 0; 
 
   while(n < LRC_MAX_CONFIG_SIZE){
     
