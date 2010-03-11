@@ -545,10 +545,9 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
   
   hid_t group, dataset, dataspace, memspace;
   hid_t cc_tid;
-  herr_t status, info, obj;
-  hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
+  herr_t status, info;
+  hsize_t dimsm[1], offset[2], count[2], stride[2];
   H5G_info_t group_info;
-  H5O_info_t object_info;
   int opts = 0, i = 0, k = 0;
   char link_name[LRC_MAX_NAME_LENGTH];
   ssize_t link;

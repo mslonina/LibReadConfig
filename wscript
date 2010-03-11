@@ -86,33 +86,6 @@ def _check_std_headers(conf, stdlibs):
   conf.check_cc(function_name='strtol', header_name='stdlib.h', mandatory=True)
   conf.check_cc(function_name='strtok', header_name='string.h', mandatory=True)
 
-# [Helper] Check for the HDF5 library
-def _check_hdf5(conf):
-  try:
-    conf.check_cc(lib='hdf5', 
-                  uselib='HDF5', 
-                  mandatory=True, 
-                  msg="Looking for HDF5 library");
-  except:
-    print "HDF5 library was not found on your system :("
-
-  try:
-    conf.check_cc(header_name='hdf5.h', 
-                  mandatory=True)
-  except:
-    print "HDF5 header was not found on your system :("
-
-  try:
-    conf.check_cc(fragment=hdf5_test_code, 
-                  execute=True, 
-                  uselib="HDF5", 
-                  define_ret=True, 
-									define_name="HAVE_HDF5_SUPPORT",
-                  mandatory=True, 
-                  msg="Checking if HDF5 is usable")
-  except:
-    print "Cannot run HDF5 testprogram :("
-
 # [Helper] Yes/No at the summary
 def _check_defined(conf, define):
 	if conf.is_defined(define):
@@ -149,62 +122,83 @@ def set_options(opt):
 # CONFIGURE
 #
 def configure(conf):
-	global stdlibs
-	#global LD_LIBRARY_PATH
-	#global INCLUDE_PATH
-	global hdf5_test_code
-	
-	conf.check_tool('compiler_cc')
-	
-	_check_std_headers(conf, stdlibs)
-	
-	# Check for HDF5
-	if Options.options.enablehdf:
-		_check_hdf5(conf)
-	
-	
-	# Check for doxygen
-	BUILDDOC="No"
-	if Options.options.builddoc:
-		try:
-			conf.find_program('doxygen', var='DOXYGEN', mandatory=True)
-			BUILDDOC="Yes"
-		except:
-			print "You need Doxygen installed to build documentation"
-	
-	# Examples
-	EXAMPLES="No"
-	if Options.options.examples:
-		EXAMPLES="Yes"
-		pass
-	
-	
-	# Define standard declarations
-	conf.define('PACKAGE_NAME', APPNAME)
-	conf.define('PACKAGE_VERSION', VERSION)
-	conf.define('PACKAGE_BUGS', BUGS)
-	conf.define('PACKAGE_URL', URL)
-	
-	conf.env.append_value('CCFLAGS', '-Wall')
-	
-	# Write config.h
-	conf.write_config_header('config.h')
+  global stdlibs
+  global hdf5_test_code
+  
+  conf.check_tool('compiler_cc')
+  
+  _check_std_headers(conf, stdlibs)
+  
+  # Check for HDF5
+  if Options.options.enablehdf:
+    try:
+      conf.check_cc(lib='hdf5', mandatory=True, msg="Looking for HDF5 library");
+    except:
+      print "HDF5 library was not found on your system :("
 
-	print
-	print "Configuration summary:"
-	print
-	print "  Install prefix: " + conf.env.PREFIX
-	print "  HDF5 support:  " + _check_defined(conf, "HAVE_HDF5_SUPPORT")
-	print "  Documentation: " + BUILDDOC
-	print "  Examples:\t " + EXAMPLES
-	print
+    try:
+      conf.check_cc(header_name='hdf5.h', mandatory=True)
+    except:
+      print "HDF5 header was not found on your system :("
+
+    try:
+      conf.check_cc(fragment=hdf5_test_code, 
+                  execute=True, 
+                  uselib='HDF5', 
+                  define_ret=True, 
+									define_name="HAVE_HDF5_SUPPORT",
+                  mandatory=True, 
+                  msg="Checking if HDF5 is usable")
+    except:
+      print "Cannot run HDF5 testprogram :("
+
+
+	
+  # Check for doxygen
+  BUILDDOC="No"
+  if Options.options.builddoc:
+    try:
+      conf.find_program('doxygen', var='DOXYGEN', mandatory=True)
+      BUILDDOC="Yes"
+    except:
+      print "You need Doxygen installed to build documentation"
+	
+  # Examples
+  EXAMPLES="No"
+  if Options.options.examples:
+    EXAMPLES="Yes"
+    pass
+	
+	
+  # Define standard declarations
+  conf.define('PACKAGE_NAME', APPNAME)
+  conf.define('PACKAGE_VERSION', VERSION)
+  conf.define('PACKAGE_BUGS', BUGS)
+  conf.define('PACKAGE_URL', URL)
+  conf.env['CCFLAGS'] += ['-Wall']
+  conf.env['CPPFLAGS'] += ['-DHAVE_CONFIG_H']
+  conf.env['CPPFLAGS'] += ['-I../build/default']
+	
+  # Write config.h
+  conf.write_config_header('config.h')
+
+  print
+  print "Configuration summary:"
+  print
+  print "  Install prefix: " + conf.env.PREFIX
+  print "  HDF5 support:  " + _check_defined(conf, "HAVE_HDF5_SUPPORT")
+  print "  Documentation: " + BUILDDOC
+  print "  Examples:\t " + EXAMPLES
+  print
 
 #
 # BUILD
 #
 def build(bld):
+  global uselib
   obj = bld.new_task_gen('cc', 'shlib')
   obj.source = ['src/libreadconfig.c']
   obj.target = 'readconfig'
+  obj.uselib = 'HDF5'
   bld.install_files('${PREFIX}/include', 'src/libreadconfig.h')
 
