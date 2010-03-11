@@ -17,9 +17,6 @@ APPNAME='libreadconfig'
 URL='http://mechanics.astri.umk.pl/projects/libreadconfig'
 BUGS='mariusz.slonina@gmail.com'
 
-#LD_LIBRARY_PATH = string.split(os.environ.get("LD_LIBRARY_PATH"),':')
-#INCLUDE_PATH = string.split(os.environ.get("C_INCLUDE_PATH"),':')
-
 srcdir = '.'
 blddir = 'build'
 
@@ -124,36 +121,41 @@ def set_options(opt):
 def configure(conf):
   global stdlibs
   global hdf5_test_code
+  global install_hdf_h
   
   conf.check_tool('compiler_cc')
   
   _check_std_headers(conf, stdlibs)
   
+  conf.env.HDF5 = 0
   # Check for HDF5
   if Options.options.enablehdf:
     try:
-      conf.check_cc(lib='hdf5', mandatory=True, msg="Looking for HDF5 library");
+      conf.check_cc(lib='hdf5', mandatory=True, uselib_store='HDF5', msg="Looking for HDF5 library")
+      conf.env.HDF5 = 1
     except:
       print "HDF5 library was not found on your system :("
+      conf.env.HDF5 = 0
 
     try:
       conf.check_cc(header_name='hdf5.h', mandatory=True)
+      conf.env.HDF5 = 1
     except:
       print "HDF5 header was not found on your system :("
+      conf.env.HDF5 = 0
 
     try:
       conf.check_cc(fragment=hdf5_test_code, 
                   execute=True, 
                   uselib='HDF5', 
                   define_ret=True, 
-									define_name="HAVE_HDF5_SUPPORT",
                   mandatory=True, 
                   msg="Checking if HDF5 is usable")
+      conf.env.HDF5 = 1
     except:
       print "Cannot run HDF5 testprogram :("
+      conf.env.HDF5 = 0
 
-
-	
   # Check for doxygen
   BUILDDOC="No"
   if Options.options.builddoc:
@@ -186,7 +188,7 @@ def configure(conf):
   print "Configuration summary:"
   print
   print "  Install prefix: " + conf.env.PREFIX
-  print "  HDF5 support:  " + _check_defined(conf, "HAVE_HDF5_SUPPORT")
+  print "  HDF5 support:  " + _check_defined(conf, "HAVE_HDF5_H")
   print "  Documentation: " + BUILDDOC
   print "  Examples:\t " + EXAMPLES
   print
@@ -198,7 +200,28 @@ def build(bld):
   global uselib
   obj = bld.new_task_gen('cc', 'shlib')
   obj.source = ['src/libreadconfig.c']
+  obj.includes = 'src'
   obj.target = 'readconfig'
   obj.uselib = 'HDF5'
-  bld.install_files('${PREFIX}/include', 'src/libreadconfig.h')
+  if bld.env.HDF5 == 1:
+    bld.install_files('${PREFIX}/include', 'src/libreadconfig.h src/libreadconfig_hdf5.h')
+  else:
+    bld.install_files('${PREFIX}/include', 'src/libreadconfig.h')
+
+#  pobj = bld(
+#    features = 'subst',
+#    source = 'lrc.pc.in',
+#    target = 'libreadconfig.pc',
+#    dict = {
+#      'NAME': APPNAME,
+#      'LIB': 'APPNAME' + '.so',
+#      'PREFIX': bld.env['PREFIX'],
+#      'BINDIR': os.path.join("${prefix}", "bin"),
+#      'LIBDIR': os.path.join("${prefix}", "lib"),
+#      'INCLUDEDIR': os.path.join("${prefix}", "include"),
+#      'VERSION': bld.env["VERSION"],
+#    },
+#    install_path = '${PKGCONFIGDIR}'
+#  )
+
 

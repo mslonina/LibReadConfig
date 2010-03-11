@@ -59,6 +59,9 @@
  */
 
 #include "libreadconfig.h"
+#if HAVE_HDF5_H
+  #include "libreadconfig_hdf5.h"
+#endif
 
 /**
  * @defgroup LRC_internals Helper functions
@@ -514,7 +517,7 @@ failure:
   return -1;
 }
 
-#if HAVE_HDF5_SUPPORT
+#if HAVE_HDF5_H
 /**
  * HDF5 parser 
  * 
@@ -662,7 +665,7 @@ void LRC_writeTextConfig(FILE* read, char* sep, char* comm, LRC_configNamespace*
   return;
 }
 
-#if HAVE_HDF5_SUPPORT
+#if HAVE_HDF5_H
 /**
  * @fn void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts)
  * @brief Write config values to hdf file.
