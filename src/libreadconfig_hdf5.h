@@ -50,8 +50,9 @@
 #include "hdf5.h"
 
 #define LRC_CONFIG_GROUP "config"
+#define LRC_HDF5_DATATYPE "LRC_Config"
 
-int LRC_hdfParser(hid_t, LRC_configNamespace*, LRC_configTypes*, int);
-void LRC_writeHdfConfig(hid_t, LRC_configNamespace*, int);
+int LRC_HDF5Parser(hid_t, LRC_configTypes*, int);
+int LRC_HDF5writer(hid_t);
 
 #endif

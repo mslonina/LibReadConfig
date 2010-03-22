@@ -67,8 +67,7 @@
  * @defgroup LRC_internals Helper functions
  * @{
  */
-// Internals
-void LRC_configError(int, char*);
+void LRC_message(int line, int type, char* message);
 char* LRC_trim(char*);
 char* LRC_nameTrim(char*);
 int LRC_charCount(char*, char*);
@@ -76,24 +75,67 @@ int LRC_matchType(char*, char*, LRC_configTypes*, int);
 int LRC_checkType(char*, int);
 int LRC_isAllowed(int);
 int LRC_checkName(char*, LRC_configTypes*, int);
+void LRC_newNamespace(char* cfg);
+
+#if HAVE_HDF5_H
+/**
+ * @var typedef struct ccd_t
+ * @brief Helper datatype used for HDF5 storage
+ *
+ * @param name
+ *  Name of the variable
+ * 
+ * @param value
+ *  Value of the variable
+ *
+ * @param type
+ *  Type of the variable
+ */
+typedef struct{
+  char* name;
+  char* value;
+  int type;
+} ccd_t;
+#endif
 
 /**
- * @fn void LRC_configError(int j, char* m)
+ * @var LRC_configNamespace* head
+ *  @brief Linked list head element
+ *
+ * @var LRC_configNamespace* current
+ *  @brief Linked list current element
+ */
+LRC_configNamespace* head;
+LRC_configNamespace* current;
+
+/**
+ * @fn void LRC_message(int j, int type, char* message)
  * @brief Prints error messages.
  * 
  * @param j
- *   The line in the config file where the error exist.
+ *  The line in the config file where the error exist.
  *
- * @param m
- *   Error message to print.
+ * @param type
+ *  Type of the error.
  *
- * @todo
- *   Add more arguments, i.e. for type checking.
- * 
+ * @param message
+ *  Error message to print.
  */
-void LRC_configError(int j, char* m){
-  
-  printf("%s\nLine %d: %s\n", LRC_E_CONFIG_SYNTAX, j, m);
+void LRC_message(int line, int type, char* message){
+
+  switch(type){
+    case LRC_ERR_CONFIG_SYNTAX:
+      printf("%s at line %d: %s\n", LRC_MSG_CONFIG_SYNTAX, line, message);
+      break;
+    case LRC_ERR_FILE_OPEN:
+      printf("%s at line %d: %s\n", LRC_MSG_FILE_OPEN, line, message);
+      break;
+    case LRC_ERR_HDF:
+      printf("%s at line %d: %s\n", LRC_MSG_HDF, line, message);
+      break;
+    default:
+      break;
+  }
 
 }
 
@@ -113,16 +155,16 @@ char* LRC_trim(char* str){
   char *ibuf = str, *obuf = str;
   int i = 0, cnt = 0;
 
-  // Trap NULL.
+  /* Trap NULL.*/
   if (str){
  
-    // Remove leading spaces (from RMLEAD.C).
+    /* Remove leading spaces (from RMLEAD.C).*/
     for (ibuf = str; *ibuf && isspace(*ibuf); ++ibuf)
       ;
     if (str != ibuf)
       memmove(str, ibuf, ibuf - str);
 
-    // Collapse embedded spaces (from LV1WS.C).
+    /* Collapse embedded spaces (from LV1WS.C).*/
     while (*ibuf){
       if (isspace(*ibuf) && cnt) ibuf++;
         else{
@@ -136,7 +178,7 @@ char* LRC_trim(char* str){
           }
           obuf[i] = LRC_NULL;
 
-     // Remove trailing spaces (from RMTRAIL.C).
+     /* Remove trailing spaces (from RMTRAIL.C).*/
      while (--i >= 0) { if (!isspace(obuf[i])) break;}
      obuf[++i] = LRC_NULL;
     }
@@ -160,7 +202,7 @@ char* LRC_nameTrim(char* l){
 
   len = strlen(l);
 
-  // Quick and dirty solution using trim function.
+  /* Quick and dirty solution using trim function. */
   l[0] = ' ';
   l[len-1] = ' ';
   l = LRC_trim(l);  
@@ -252,7 +294,7 @@ int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
   while(i < numCT){
     if(strcmp(ct[i].name,varname) == 0){
       if(LRC_checkType(value, ct[i].type) != 0){ 
-//        printf("Error: %s -> %s ", varname, value);
+/*        printf("Error: %s -> %s ", varname, value); */
         return -1;
       }else{
         return ct[i].type;
@@ -290,7 +332,7 @@ int LRC_checkType(char* value, int type){
         if(isdigit(value[i]) || value[0] == '-'){ 
           ret = 0;
         }else{
-//          printf("is not INT (followed by %d)\n", value[i]);
+/*          printf("is not INT (followed by %d)\n", value[i]);*/
           ret = -1;
           break;
         }
@@ -302,7 +344,7 @@ int LRC_checkType(char* value, int type){
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
         ret = 0;
       }else{
-//        printf("is not FLOAT (followed by %s)\n", p);
+/*        printf("is not FLOAT (followed by %s)\n", p);*/
         ret = -1;
       }
       break;
@@ -312,7 +354,7 @@ int LRC_checkType(char* value, int type){
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
         ret = 0;
       }else{
-//        printf("is not DOUBLE (followed by %s)\n", p);
+/*        printf("is not DOUBLE (followed by %s)\n", p);*/
         ret = -1;
       }
       break;
@@ -322,7 +364,7 @@ int LRC_checkType(char* value, int type){
         if(isalpha(value[i]) || LRC_isAllowed(value[i]) == 0){
           ret = 0;
         }else{
-//          printf("is not STRING (followed by %d)\n",value[i]);
+/*          printf("is not STRING (followed by %d)\n",value[i]);*/
           ret = -1;
           break;
         }
@@ -364,6 +406,27 @@ int LRC_isAllowed(int c){
 }
 
 /**
+ * @fn void newNamespace(char* cfg)
+ * @brief Helper function for creating new namespaces
+ */
+void LRC_newNamespace(char* cfg){
+
+  LRC_configNamespace* newNM;
+  
+  newNM = malloc(sizeof(LRC_configNamespace));
+
+  if(head == NULL) head = newNM;
+  else  current->next = newNM;
+
+  current = newNM;
+  newNM->space = malloc(strlen(cfg+1));
+  strncpy(newNM->space, cfg, strlen(cfg));
+  newNM->space[strlen(cfg)]=LRC_NULL;
+  newNM->options = NULL;
+  newNM->next = NULL;
+}
+
+/**
  * @}
  */
 
@@ -377,8 +440,8 @@ int LRC_isAllowed(int c){
  *  @defgroup LRC_parser Parsers
  *  @{
  *  Currently there are two parsers available:
- *  - Text file parser @see LRC_textParser()
- *  - HDF5 file parser @see LRC_hdfParser()
+ *  - Text file parser @see LRC_ASCIIParser()
+ *  - HDF5 file parser @see LRC_HDF5Parser()
  *
  *  @todo
  *    Add secondary separator support.
@@ -387,7 +450,7 @@ int LRC_isAllowed(int c){
 /**
  *  Text parser
  *
- *  @fn int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT)
+ *  @fn int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int numCT)
  *  @brief Reads config file, namespaces, variable names and values,
  *  into the options structure @see LRC_configNamespace.
  *
@@ -399,9 +462,6 @@ int LRC_isAllowed(int c){
  *
  *  @param COMM
  *    The comment mark.
- *
- *  @param configSpace
- *    Pointer to the structure with config file data.
  *
  *  @param ct
  *    Pointer to the structure with datatypes allowed in the config file.
@@ -415,101 +475,138 @@ int LRC_isAllowed(int c){
  *  @todo
  *    Check if the namespace is allowed.
  */
-int LRC_textParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
+
+int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int numCT){
   
   int i = 0; int j = 0; int sepc = 0; int n = 0;
   char* line; char l[LRC_MAX_LINE_LENGTH]; char* b; char* c;
+  char* name; char* value; 
   int ret = 0; 
 
-  while(n < LRC_MAX_CONFIG_SIZE){
+  LRC_configOptions* newOP = NULL;
+  LRC_configOptions* lastOP;
+
+  size_t p = 0;
+  size_t valuelen = 0;
+
+  while(!feof(read)){
     
-    // Count lines.
+    /* Count lines */
     j++; 
   
-    if((feof(read) != 0)) break;
     line = fgets(l, LRC_MAX_LINE_LENGTH, read);
     
-    // Skip blank lines and any NULL.
+    /* Skip blank lines and any NULL */
     if (line == NULL) break;
     if (line[0] == '\n') continue;
     
-    // Now we have to trim leading and trailing spaces etc.
+    /* Now we have to trim leading and trailing spaces etc */
     line = LRC_trim(line);
 
-    // Check for full line comments and skip them.
+    /* Check for full line comments and skip them */
     if (strspn(line, COMM) > 0) continue;
     
-    // Check for the separator at the begining.
+    /* Check for the separator at the beginning */
     if (strspn(line, SEP) > 0){
-      LRC_configError(j,LRC_E_MISSING_VAR); 
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_VAR); 
       goto failure;
     }
 
-    // First split var/value and inline comments.
-    // Trim leading and trailing spaces.
+    /* First split var/value and inline comments.
+     * Trim leading and trailing spaces */
     b = LRC_trim(strtok(line,COMM));
 
-    // Check for namespaces.
+    /* Check for namespaces */
     if (b[0] == '['){
       if(b[strlen(b)-1] != ']'){
-        LRC_configError(j,LRC_E_MISSING_BRACKET); 
+        LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_BRACKET); 
         goto failure;
       }
 
       b = LRC_nameTrim(b);
-      strcpy(configSpace[n].space,b); 
+      LRC_newNamespace(b);
       i = 0;
       n++;
+
       continue;
     }
   
-    // Check if in the var/value string the separator exist.
-    if(strstr(b,SEP) == NULL){
-      LRC_configError(j,LRC_E_MISSING_SEP); 
-      goto failure;
-    }
-    
-    // Check some special case:
-    // we have separator, but no value.
-    if((strlen(b) - 1) == strcspn(b,SEP)){
-      LRC_configError(j,LRC_E_MISSING_VAL); 
+    /* If no namespace was specified return failure */
+    if (current == NULL){
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_NONAMESPACE);
       goto failure;
     }
 
-    // We allow to have only one separator in line.
+    /* Check if in the var/value string the separator exist.*/
+    if(strstr(b,SEP) == NULL){
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_SEP); 
+      goto failure;
+    }
+    
+    /* Check some special case:
+     * we have separator, but no value */
+    if((strlen(b) - 1) == strcspn(b,SEP)){
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_VAL); 
+      goto failure;
+    }
+
+    /* We allow to have only one separator in line */
     sepc = LRC_charCount(b, SEP);
     if(sepc > 1){
-      LRC_configError(j,LRC_E_TOOMANY_SEP); 
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_TOOMANY_SEP); 
       goto failure;
     }
     
-    // Ok, now we are prepared.
+    /* Ok, now we are prepared */
     c = LRC_trim(strtok(b,SEP));
 
-    // Check if variable is allowed.
+    /* Check if variable is allowed.
+     * We skip unknown variables silently */
     if(LRC_checkName(c, ct, numCT) < 0){
-      LRC_configError(j,LRC_E_UNKNOWN_VAR); 
-      goto failure;
+      /* LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); */
+      continue;
     }
 
-    strcpy(configSpace[n-1].options[i].name,c);
-  
+    p = strlen(c);
+    newOP = malloc(sizeof(LRC_configOptions));
+    name = malloc(p+1);
+    strncpy(name, c, p);
+    name[p] = LRC_NULL;
+    newOP->name = name;
+
     while (c!=NULL){
       if (c[0] == '\n') break;
-      strcpy(configSpace[n-1].options[i].value,c);
+
+      valuelen = strlen(c);
+      value = malloc(valuelen+1);
+      strncpy(value, c, valuelen);
+      value[valuelen] = LRC_NULL;
+
+      newOP->value = value;
       c = LRC_trim(strtok(NULL,"\n"));
     }  
 
-    ret = LRC_matchType(configSpace[n-1].options[i].name, configSpace[n-1].options[i].value, ct, numCT);
+    newOP->next = NULL;
+    ret = LRC_matchType(newOP->name, newOP->value, ct, numCT);
     if(ret < 0){
-      LRC_configError(j, LRC_E_WRONG_INPUT); 
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_WRONG_INPUT); 
       goto failure;
     }
 
-    configSpace[n-1].options[i].type = ret;
+    newOP->type = ret;
 
     i++;
-    configSpace[n-1].num = i;
+    current->num = i;
+
+    if(current->options == NULL) 
+      current->options = newOP;
+    else{
+     lastOP = current->options;
+     while((lastOP->next) != NULL)
+       lastOP = lastOP->next;
+     lastOP->next = newOP;
+    }
+
   }
   return n;
 
@@ -517,11 +614,47 @@ failure:
   return -1;
 }
 
+/**
+ * @fn void LRC_cleanup()
+ * @brief Cleanup assign pointers. This is required for proper memory managment.
+ */
+void LRC_cleanup(){
+
+  LRC_configOptions* currentOP;
+  LRC_configOptions* nextOP;
+  LRC_configNamespace* nextNM;
+
+  current = head;
+
+  do{
+    currentOP = current->options;
+    do {
+      if(currentOP){
+        nextOP = currentOP->next;
+        free(currentOP->value);
+        free(currentOP->name);
+        free(currentOP);
+        currentOP = nextOP;
+      }
+    }while(currentOP);
+
+  if(current){
+    nextNM = current->next;
+    free(current->space);
+    free(current);
+    current=nextNM;
+  }
+  }while(current);
+
+  head = NULL;
+
+}
+
 #if HAVE_HDF5_H
 /**
  * HDF5 parser 
  * 
- * @fn int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int numCT)
+ * @fn int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT)
  * @brief Parse config data stored in HDF5 files.
  *
  * @param file
@@ -544,92 +677,111 @@ failure:
  *   - Open, rather than recreate compound datatype.
  *
  */
-int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int numCT){
+int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
   
-  hid_t group, dataset, dataspace, memspace;
-  hid_t cc_tid;
+  hid_t group, dataset, dataspace;
+  hid_t ccm_tid, name_dt, value_dt;
   herr_t status, info;
-  hsize_t dimsm[1], offset[2], count[2], stride[2];
   H5G_info_t group_info;
-  int opts = 0, i = 0, k = 0;
-  char link_name[LRC_MAX_NAME_LENGTH];
+  
+  int numOfNM = 0, i = 0, k = 0;
+  char link_name[LRC_MAX_LINE_LENGTH];
   ssize_t link;
+  ssize_t nlen, vlen;
   hsize_t edims[1], emaxdims[1];
 
-  LRC_configOptions rdata[1];
+  LRC_configOptions* newOP = NULL;
+  LRC_configOptions* lastOP;
 
-  // FIXME: [OPEN, NOT CREATE] Create compound datatype.
-  cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
-  hid_t name_dt = H5Tcopy(H5T_C_S1);
-  H5Tset_size(name_dt, LRC_MAX_NAME_LENGTH);
+  ccd_t* rdata;
 
-  hid_t value_dt = H5Tcopy(H5T_C_S1);
-  H5Tset_size(value_dt, LRC_MAX_VALUE_LENGTH);
+  /* NULL global pointers */
+  current = NULL;
+  head = NULL;
 
-  H5Tinsert(cc_tid, "Name", HOFFSET(LRC_configOptions, name), name_dt);
-  H5Tinsert(cc_tid, "Value", HOFFSET(LRC_configOptions, value), value_dt);
-  H5Tinsert(cc_tid, "Type", HOFFSET(LRC_configOptions, type), H5T_NATIVE_INT);
+  /* For future me: how to open compound data type and read it,
+   * without rebuilding memtype? Is this possible? */
 
-  // Open config group.
+  /* Create variable length string datatype */
+  name_dt = H5Tcopy(H5T_C_S1);
+  status = H5Tset_size(name_dt, H5T_VARIABLE);
+
+  value_dt = H5Tcopy(H5T_C_S1);
+  status = H5Tset_size(value_dt, H5T_VARIABLE);
+
+  /* Create compound datatype for the memory */
+  ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
+
+  H5Tinsert(ccm_tid, "Name", HOFFSET(ccd_t, name), name_dt);
+  H5Tinsert(ccm_tid, "Value", HOFFSET(ccd_t, value), value_dt);
+  H5Tinsert(ccm_tid, "Type", HOFFSET(ccd_t, type), H5T_NATIVE_INT);
+
+  /* Open config group */
   group = H5Gopen(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
 
-  // Get group info.
+  /* Get group info */
   info = H5Gget_info(group, &group_info);
 
-  // Get number of opts (dataspaces).
-  opts = group_info.nlinks;
+  /* Get number of opts (dataspaces) */
+  numOfNM = group_info.nlinks;
 
-  // Iterate each dataspace and assign config values.
-  for(i = 0; i < opts; i++){
+  /* Iterate each dataspace and assign config values */
+  for(i = 0; i < numOfNM; i++){
 
-    // Get name od dataspace -> the namespace.
-    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, link_name, LRC_MAX_SPACE_LENGTH, H5P_DEFAULT);
-    strcpy(cs[i].space,link_name);
+    /* Get name of dataspace -> the namespace */
+    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
 
-    // Get size of the table with config data.
-    dataset = H5Dopen(group, cs[i].space, H5P_DEFAULT);
+    /* Get size of the table with config data */
+    dataset = H5Dopen(group, link_name, H5P_DEFAULT);
     dataspace = H5Dget_space(dataset);
     H5Sget_simple_extent_dims(dataspace, edims, emaxdims);
+    
+    /* We will get all data first */
+    rdata = malloc((int)edims[0]*sizeof(ccd_t));
+    status = H5Dread(dataset, ccm_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
+    
+    H5Sclose(dataspace);
+    H5Dclose(dataset);
 
-    cs[i].num = (int)edims[0];
+    /* Create new namespace */
+    LRC_newNamespace(link_name);
+    current->num = (int)edims[0];
 
-    // Now we know how many rows are in data tables. 
-    // Thus, we can read them one by one and assign to cs struct.
-    for(k = 0; k < cs[i].num; k++){
+    /* Assign values */
+    for(k = 0; k < current->num; k++){
+      newOP = malloc(sizeof(LRC_configOptions));
+
+      nlen = strlen(rdata[k].name);
+      newOP->name = malloc(nlen);
+      strcpy(newOP->name, rdata[k].name);
+
+      vlen = strlen(rdata->value);
+      newOP->value = malloc(vlen);
+      strcpy(newOP->value, rdata[k].value);
+
+      newOP->type = rdata[k].type;
       
-      offset[0] = k;
-      offset[1] = 1;
-      
-      dimsm[0] = 1; 
-      dimsm[1] = 1;
+      newOP->next = NULL;
 
-      count[0] = 1;
-      count[1] = 1;
+      if(current->options == NULL){
+        current->options = newOP;
+      }else{
+        lastOP = current->options;
+        while((lastOP->next) != NULL){
+          lastOP = lastOP->next;
+        }
+        lastOP->next = newOP;
+      }
 
-      stride[0] = 1;
-      stride[1] = 1;
-
-      memspace = H5Screate_simple(1, dimsm, NULL);
-      status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
-      status = H5Dread(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, rdata);
-
-      // Assign values.
-      strcpy(cs[i].options[k].name, rdata->name);
-      strcpy(cs[i].options[k].value, rdata->value);
-      cs[i].options[k].type = rdata->type;
-   
-      H5Sclose(memspace);
     }
 
-    H5Dclose(dataset);
-    H5Sclose(dataspace);
-
+    free(rdata);
   }
 
-  H5Tclose(cc_tid);
+  H5Tclose(ccm_tid);
   H5Gclose(group);
-  
-  return opts;
+ 
+  return numOfNM;
 }
 #endif
 
@@ -644,77 +796,146 @@ int LRC_hdfParser(hid_t file, LRC_configNamespace* cs, LRC_configTypes* ct, int 
  */
 
 /**
- * @fn void LRC_writeConfig(char* file, char* s, char* l, LRC_configNamespace* ct, int opts)
+ * @fn void LRC_writeASCIIConfig(char* file, char* s, char* l, LRC_configNamespace* ct, int opts)
  * @brief Write config file. Wrapper for @see LRC_writeTextConfig() and @see LRC_writeHdfConfig()
- *
- * @todo
- *   This function is to be written. 
  */
-void LRC_writeConfig(char* file, char* sep, char* comm, LRC_configNamespace* ct, int opts){
-  return;
+int LRC_writeASCIIConfig(char* file, char* sep, char* comm, int opts){
+
+  FILE* write;
+  write = fopen(file, "w");
+  
+  if(write != NULL){
+    LRC_ASCIIwriter(write, sep, comm, opts);
+  }else{
+    perror("Error writing config file:");
+    return -1;
+  }
+
+  fclose(write);
+  return 0;
 }
 
 /**
- * @fn void LRC_writeTextConfig(FILE*, char* sep, char* comm, LRC_configNamespace* ct, int opts)
+ * @fn void LRC_ASCIIwriter(FILE*, char* sep, char* comm, int opts)
  * @brief Write ASCII config file.
- *
- * @todo
- *   This function is to be written.
+ * @return
+ *  Should return 0 on success, errcode otherwise
  */
-void LRC_writeTextConfig(FILE* read, char* sep, char* comm, LRC_configNamespace* ct, int opts){
-  return;
+int LRC_ASCIIwriter(FILE* write, char* sep, char* comm, int opts){
+
+  LRC_configOptions* currentOP;
+  LRC_configOptions* nextOP;
+  LRC_configNamespace* nextNM;
+
+  current = head;
+
+  fprintf(write,"%s Written by LibReadConfig \n",comm);
+
+  do{
+    if(current){
+      fprintf(write, "[%s]\n",current->space);
+      currentOP = current->options; 
+      do{
+        if(currentOP){
+          fprintf(write, "%s %s %s\n", currentOP->name, sep, currentOP->value);
+          nextOP = currentOP->next;
+          currentOP = nextOP;
+        }
+      }while(currentOP);
+      
+      nextNM = current->next;
+      current = nextNM;
+    }
+    fprintf(write,"\n");
+  }while(current);
+
+  fprintf(write,"\n");
+  return 0;
 }
 
 #if HAVE_HDF5_H
 /**
- * @fn void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts)
+ * @fn void LRC_HDF5writer(hid_t file)
  * @brief Write config values to hdf file.
  * 
  * @param file
  *   The handler of the file.
  *
- * @param cs
- *   Pointer to the structure with config values.
- *
- * @param allopts
- *   Number of namespaces in the config structure.
+ * @return
+ *  Should return 0 on success, errcode otherwise
  *
  */
-void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
+int LRC_HDF5writer(hid_t file){
 
   hid_t group, dataset, dataspace, memspace;
-  hid_t cc_tid;
+  hid_t ccm_tid, ccf_tid, name_dt, value_dt;
   hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
   herr_t status;
-  int i = 0, k = 0;
+  int k = 0;
+  size_t nlen, vlen;
 
-  LRC_configOptions ccd;
+  LRC_configOptions* currentOP;
+  LRC_configOptions* nextOP;
+  LRC_configNamespace* nextNM;
+
+  ccd_t* ccd;
+  ccd = malloc(sizeof(ccd_t));
 
   group = H5Gcreate(file, LRC_CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
- 
-  // Create compound datatype.
-  cc_tid = H5Tcreate(H5T_COMPOUND, sizeof(LRC_configOptions));
-  hid_t name_dt = H5Tcopy(H5T_C_S1);
-  H5Tset_size(name_dt, LRC_MAX_NAME_LENGTH);
 
-  hid_t value_dt = H5Tcopy(H5T_C_S1);
-  H5Tset_size(value_dt, LRC_MAX_VALUE_LENGTH);
+  current = head;
 
-  H5Tinsert(cc_tid, "Name", HOFFSET(LRC_configOptions, name), name_dt);
-  H5Tinsert(cc_tid, "Value", HOFFSET(LRC_configOptions, value), value_dt);
-  H5Tinsert(cc_tid, "Type", HOFFSET(LRC_configOptions, type), H5T_NATIVE_INT);
+  /* Create variable length string datatype */
+  name_dt = H5Tcopy(H5T_C_S1);
+  status = H5Tset_size(name_dt, H5T_VARIABLE);
 
-  for(i = 0; i < allopts; i++){
-    
-    dims[0] = cs[i].num;
-    dims[1] = 1;
-    dataspace = H5Screate_simple(1, dims, NULL);
-    
-    dataset = H5Dcreate(group, cs[i].space,cc_tid, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  value_dt = H5Tcopy(H5T_C_S1);
+  status = H5Tset_size(value_dt, H5T_VARIABLE);
 
-    // Write config data one by one in given namespace.
-    for(k = 0; k < dims[0]; k++){
+  /* Create compound datatype for the memory */
+  ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
+
+  H5Tinsert(ccm_tid, "Name", HOFFSET(ccd_t, name), name_dt);
+  H5Tinsert(ccm_tid, "Value", HOFFSET(ccd_t, value), value_dt);
+  H5Tinsert(ccm_tid, "Type", HOFFSET(ccd_t, type), H5T_NATIVE_INT);
+
+  /* Create compound datatype for the file */
+  ccf_tid = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t) + sizeof(hvl_t));
+
+  status = H5Tinsert(ccf_tid, "Name", 0, name_dt);
+  status = H5Tinsert(ccf_tid, "Value", sizeof(hvl_t), value_dt);
+  status = H5Tinsert(ccf_tid, "Type", sizeof(hvl_t) + sizeof(hvl_t),H5T_NATIVE_INT);
+
+  /* Commit datatype */
+  status = H5Tcommit(file, LRC_HDF5_DATATYPE, ccf_tid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
       
+  do{
+   if(current){ 
+
+      currentOP = current->options;
+      dims[0] = (hsize_t)current->num;
+      dims[1] = 1;
+      dataspace = H5Screate_simple(1, dims, NULL);
+    
+      dataset = H5Dcreate(group, current->space, ccf_tid, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    /* Write config data one by one in given namespace */
+    k = 0;
+    do{
+      if(currentOP){ 
+
+      /* Assign values */
+      nlen = strlen(currentOP->name);
+      ccd->name = malloc(nlen);
+      strcpy(ccd->name, currentOP->name);
+      
+      vlen = strlen(currentOP->value);
+      ccd->value = malloc(vlen);
+      strcpy(ccd->value, currentOP->value);
+      
+      ccd->type = currentOP->type;
+
+      /* Prepare HDF write */
       offset[0] = k; 
       offset[1] = 0;
       
@@ -730,61 +951,72 @@ void LRC_writeHdfConfig(hid_t file, LRC_configNamespace* cs, int allopts){
       memspace = H5Screate_simple(1, dimsm, NULL);
       status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
 
-      strcpy(ccd.name,cs[i].options[k].name);
-      strcpy(ccd.value,cs[i].options[k].value);
-      ccd.type = cs[i].options[k].type;
-
-      status = H5Dwrite(dataset, cc_tid, memspace, dataspace, H5P_DEFAULT, &ccd);
-
+      status = H5Dwrite(dataset, ccm_tid, memspace, dataspace, H5P_DEFAULT, ccd);
       status = H5Sclose(memspace);
-    }
+
+      free(ccd->name);
+      free(ccd->value);
+      nextOP = currentOP->next;
+      currentOP = nextOP;
+      k++;
+
+      }
+    }while(currentOP);
 
     status = H5Dclose(dataset);
     status = H5Sclose(dataspace);
-  }
 
+    nextNM = current->next;
+    current = nextNM;
+   }
+  }while(current);
 
   status = H5Gclose(group);
-  status = H5Tclose(cc_tid);
+  status = H5Tclose(name_dt);
+  status = H5Tclose(value_dt);
+  status = H5Tclose(ccf_tid);
+  status = H5Tclose(ccm_tid);
 
-  return;
+  free(ccd);
+
+  return 0;
 }
 #endif
 
 /**
- * @fn void LRC_printAll(int n, LRC_configNamespace* configSpace)
+ * @fn void LRC_printAll()
  * @brief Prints all options.
- *
- * @param n
- *   Number of options.
- *   @see LRC_textParser()
- *   @see LRC_hdfParser()
- *
- * @param configSpace
- *   Pointer to the structure with config data.
- *   @see LRC_textParser()
- *   @see LRC_hdfParser()
- *
  */
-void LRC_printAll(int n, LRC_configNamespace* configSpace){
- 
-  int i = 0; int k = 0;
-  
-  for (i = 0; i < n; i++){
-		printf("Namespace [%s]:\n",configSpace[i].space);
-    for (k = 0; k < configSpace[i].num; k++){
-			printf("\t%s = %s [type %d]\n",
-          configSpace[i].options[k].name,
-          configSpace[i].options[k].value,
-          configSpace[i].options[k].type
-          );
+void LRC_printAll(){
+
+  LRC_configOptions* currentOP;
+  LRC_configOptions* nextOP;
+  LRC_configNamespace* nextNM;
+
+  current = head;
+
+  do{
+    if(current){
+      nextNM = current->next;
+      printf("\n[%s][%d]\n",current->space, current->num);
+      currentOP = current->options;
+      do {
+        if(currentOP){
+          nextOP = currentOP->next;
+          printf("%s = %s [type %d]\n", currentOP->name, currentOP->value, currentOP->type);
+          currentOP = nextOP;
+        }
+      }while(currentOP);
+      
+      current=nextNM;
     }
-    printf("\n");
-  }
+    
+  }while(current);
+
 }
 
 /**
- * @fn int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT)
+ * @fn int LRC_parseASCIIConfig(char* inif, char* sep, char* comm, LRC_configTypes* ct, int numCT)
  * @brief Wrapper function.
  *
  * @param inif
@@ -796,9 +1028,6 @@ void LRC_printAll(int n, LRC_configNamespace* configSpace){
  * @param comm
  *   The comment mark.
  * 
- * @param configSpace
- *   Pointer to config data structure.
- *
  * @param ct
  *   Pointer to allowed datatypes structure.
  *
@@ -808,10 +1037,8 @@ void LRC_printAll(int n, LRC_configNamespace* configSpace){
  * @return
  *    Number of namespaces found in the config file on success, -1 otherwise.
  *
- * @todo
- *    HDF5 file handling.
  */
-int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* configSpace, LRC_configTypes* ct, int numCT){
+int LRC_parseASCIIConfig(char* inif, char* sep, char* comm, LRC_configTypes* ct, int numCT){
   
   FILE* read;
   int opts;
@@ -819,8 +1046,8 @@ int LRC_parseConfigFile(char* inif, char* sep, char* comm, LRC_configNamespace* 
 	read = fopen(inif,"r");
 	if(read != NULL){
     
-    // Read and parse config file.
-		opts = LRC_textParser(read, sep, comm, configSpace, ct, numCT); 
+    /* Read and parse config file.*/
+		opts = LRC_ASCIIParser(read, sep, comm, ct, numCT); 
 	}else{
 		perror("Error opening config file:");
 		return -1;

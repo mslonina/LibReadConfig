@@ -24,7 +24,11 @@
 /**
  * Include LibReadConfig
  */
+
+/*#define HAVE_HDF5_H 0*/
+
 #include "libreadconfig.h"
+#include "libreadconfig_hdf5.h"
 
 /**
  * Include HDF5 library
@@ -74,8 +78,7 @@ int main(int argc, char* argv[]){
   int opts = 0;
   int h5opts = 0;
 
-  LRC_configNamespace cs[50];
-  LRC_configNamespace cc[50];
+  char* ascii = "ascii.config";
 
   LRC_configTypes ct[9] = {
     {"default", "inidata", LRC_CHAR},
@@ -90,43 +93,38 @@ int main(int argc, char* argv[]){
   };
   int numCT = 9;
 	
-  inif = "sample-config"; //input file
+  inif = "lrc-config"; //input file
 	
   printf("\n");
   
-  //Read config file. LRC will return number of namespaces.
-  opts = LRC_parseConfigFile(inif, sep, comm, cs, ct, numCT);
+  /* Read config file. LRC will return number of namespaces. */
+  opts = LRC_parseASCIIConfig(inif, sep, comm, ct, numCT);
   
-  //You can handle any errors in the way You like.
+  /* You can handle any errors in the way You like. */
   if(opts < 0) exit(1);
 
-  //Here we just print all options using LRC_printAll()
+  /* Here we just print all options using LRC_printAll() */
 	printf("\nALL OPTIONS [%d]: \n", opts);
-  LRC_printAll(opts, cs);
+  LRC_printAll();
 
-  //Now let us read config file stored in HDF5
-
-  //We create HDF5 file
+  /* We create HDF5 file */ 
   file = H5Fcreate("h5config.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   
-  // Copy config file to hdf5 file
-  LRC_writeHdfConfig(file, cs, opts);
+  /* Copy config file to hdf5 file */
+  LRC_HDF5writer(file);
 
-  // Read hdf5 config file
-  h5opts = LRC_hdfParser(file, cc, ct, numCT);
-
-  printf("H5OPTS = %d\n", h5opts);
-  
-  // Print all options
-  LRC_printAll(h5opts, cc);
- 
-  //Finally, we release resources.
+  /* Finally, we release resources.*/
   H5Fclose(file);
+
+  /* Write ASCII config */
+  LRC_writeASCIIConfig(ascii, sep, comm, opts);
+
+  LRC_cleanup();
 	
-	// The tricky part is to do some conversions.
-	// You need to handle this by hand, because we don't know
-  // what variables You use. 
-	printf("\nCONVERTED OPTIONS:\n");
+	/* The tricky part is to do some conversions.
+   * You need to handle this by hand, because we don't know
+   * what variables You use. */
+	/*printf("\nCONVERTED OPTIONS:\n");
 	for(i = 0; i < opts; i++){
     if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
 		  for(k = 0; k < cs[i].num; k++){
@@ -143,10 +141,10 @@ int main(int argc, char* argv[]){
 			  if(strcmp(cs[i].options[k].name,"yres") == 0) yres = atoi(cs[i].options[k].value); 
       }
     }
+*/
 
-
-	 // Here we just print options.
-    if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
+	 /* Here we just print options. */
+  /*  if(strcmp(cs[i].space,"default") == 0 || strcmp(cs[i].space, "logs") == 0){
 		printf("Namespace [%s]:\n",cs[i].space);
 		for(k = 0; k < cs[i].num; k++){
 			printf("%s\t = \t",cs[i].options[k].name);
@@ -171,6 +169,7 @@ int main(int argc, char* argv[]){
 
   }
 	printf("\n");
+*/
 
   return 0;
 }

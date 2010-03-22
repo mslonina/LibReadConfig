@@ -82,6 +82,7 @@ def _check_std_headers(conf, stdlibs):
   conf.check_cc(function_name='strstr', header_name='string.h', mandatory=True)
   conf.check_cc(function_name='strtol', header_name='stdlib.h', mandatory=True)
   conf.check_cc(function_name='strtok', header_name='string.h', mandatory=True)
+  conf.check_cc(function_name='strncpy', header_name='string.h', mandatory=True)
 
 # [Helper] Yes/No at the summary
 def _check_defined(conf, define):
@@ -178,6 +179,7 @@ def configure(conf):
   conf.define('PACKAGE_BUGS', BUGS)
   conf.define('PACKAGE_URL', URL)
   conf.env['CCFLAGS'] += ['-Wall']
+  conf.env['CCFLAGS'] += ['-std=c99']
   conf.env['CPPFLAGS'] += ['-DHAVE_CONFIG_H']
   conf.env['CPPFLAGS'] += ['-I../build/default']
 	

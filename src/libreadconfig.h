@@ -58,6 +58,7 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <string.h>
+#include <inttypes.h>
 
 /**
  * @def LRC_MAX_LINE_LENGTH
@@ -117,14 +118,27 @@
  * @def LRC_E_UNKNOWN_VAR
  * @brief Message for unknown variable error.
  */
-#define LRC_E_CONFIG_SYNTAX "Config file syntax error."
-#define LRC_E_MISSING_VAR "Missing variable name."
-#define LRC_E_MISSING_VAL "Missing value."
-#define LRC_E_MISSING_SEP "Missing separator."
-#define LRC_E_MISSING_BRACKET "Missing bracket in namespace."
-#define LRC_E_TOOMANY_SEP "To many separators."
-#define LRC_E_WRONG_INPUT "Wrong input value type."
-#define LRC_E_UNKNOWN_VAR "Unknown variable."
+
+enum LRC_messages_type{
+  LRC_ERR_CONFIG_SYNTAX,
+  LRC_ERR_WRONG_INPUT,
+  LRC_ERR_UNKNOWN_VAR,
+  LRC_ERR_FILE_OPEN,
+  LRC_ERR_FILE_CLOSE,
+  LRC_ERR_HDF
+} LRC_messages;
+
+#define LRC_MSG_CONFIG_SYNTAX "Config file syntax error"
+#define LRC_MSG_MISSING_VAR "Missing variable name"
+#define LRC_MSG_MISSING_VAL "Missing value"
+#define LRC_MSG_MISSING_SEP "Missing separator"
+#define LRC_MSG_MISSING_BRACKET "Missing bracket in namespace"
+#define LRC_MSG_TOOMANY_SEP "Too many separators"
+#define LRC_MSG_WRONG_INPUT "Wrong input value type"
+#define LRC_MSG_UNKNOWN_VAR "Unknown variable"
+#define LRC_MSG_FILE_OPEN "File open error"
+#define LRC_MSG_HDF "HDF5 error"
+#define LRC_MSG_NONAMESPACE "No namespace has been specified"
 
 /**
  * @enum datatypes
@@ -145,10 +159,11 @@ enum datatypes{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR } types;
  * @param int
  *   The type of the variable.
  */
-typedef struct {
-  char name[LRC_MAX_NAME_LENGTH];
-  char value[LRC_MAX_VALUE_LENGTH];
+typedef struct LRC_configOptions{
+  char* name;
+  char* value;
   int type;
+  struct LRC_configOptions* next;
 } LRC_configOptions;
 
 /**
@@ -164,10 +179,11 @@ typedef struct {
  * @param int
  *   The number of options read for given config options struct.
  */
-typedef struct {
-  char space[LRC_MAX_SPACE_LENGTH];
-  LRC_configOptions options[LRC_MAX_OPTIONS_NUM];
+typedef struct LRC_configNamespace{
+  char* space;
+  LRC_configOptions* options;
   int num;
+  struct LRC_configNamespace* next;
 } LRC_configNamespace;
 
 /**
@@ -184,19 +200,19 @@ typedef struct {
  *   The type of the value.
  */
 typedef struct {
-  char space[LRC_MAX_SPACE_LENGTH];
-  char name[LRC_MAX_NAME_LENGTH];
+  char* space;
+  char* name;
   int type;
 } LRC_configTypes;
 
 /**
  * Public API
  */
-int LRC_textParser(FILE*, char*, char*, LRC_configNamespace*, LRC_configTypes*, int);
-
-int LRC_parseConfigFile(char*, char*, char*, LRC_configNamespace*, LRC_configTypes* ct, int);
-void LRC_printAll(int, LRC_configNamespace*);
-void LRC_writeTextConfig(FILE*, char*, char*, LRC_configNamespace*, int);
-void LRC_writeConfig(char*, char*, char*, LRC_configNamespace*, int);
+int LRC_ASCIIParser(FILE*, char*, char*, LRC_configTypes*, int);
+int LRC_parseASCIIConfig(char*, char*, char*, LRC_configTypes* ct, int);
+int LRC_ASCIIwriter(FILE*, char*, char*, int);
+int LRC_writeASCIIConfig(char*, char*, char*, int);
+void LRC_printAll();
+void LRC_cleanup();
 
 #endif
