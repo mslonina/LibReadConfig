@@ -64,33 +64,11 @@
  * @def LRC_MAX_LINE_LENGTH
  * @brief Maximum line length in the config file.
  *
- * @def LRC_MAX_CONFIG_SIZE
- * @brief Maximum number of lines in the config file.
- *
- * @def LRC_MAX_SPACE_LENGTH
- * @brief Maximum length of the namespace.
- * 
- * @def LRC_MAX_NAME_LENGTH
- * @brief Maximum length of the variable name.
- * 
- * @def LRC_MAX_VALUE_LENGTH
- * @brief Maximum length of the value.
- * 
- * @def LRC_MAX_OPTIONS_NUM
- * @brief Maximum variables in given namespace.
- * 
- * @def LRC_CONFIG_GROUP
- * @brief Name of the config file group in HDF
- * 
  * @def LRC_NULL
  * @brief Null character for trimming.
  */
 #define LRC_MAX_LINE_LENGTH 1024
-#define LRC_MAX_CONFIG_SIZE 1024
-#define LRC_MAX_SPACE_LENGTH 256
-#define LRC_MAX_NAME_LENGTH 256
-#define LRC_MAX_VALUE_LENGTH 256
-#define LRC_MAX_OPTIONS_NUM 50
+#define LRC_OPTIONS_END {NULL, NULL, NULL, 0}
 #define LRC_NULL '\0'
 
 /**
@@ -139,12 +117,20 @@ enum LRC_messages_type{
 #define LRC_MSG_FILE_OPEN "File open error"
 #define LRC_MSG_HDF "HDF5 error"
 #define LRC_MSG_NONAMESPACE "No namespace has been specified"
+#define LRC_MSG_UNKNOWN_NAMESPACE "Unknown namespace"
 
 /**
  * @enum datatypes
  * @brief List of datatypes. More may be added in the future.
  */
-enum datatypes{ LRC_INT, LRC_FLOAT, LRC_DOUBLE, LRC_CHAR } types; 
+enum datatypes{ 
+  LRC_INT, 
+  LRC_LONGINT,
+  LRC_FLOAT, 
+  LRC_DOUBLE, 
+  LRC_LONGDOUBLE, 
+  LRC_STRING 
+} types; 
 
 /**
  * @struct LRC_configOptions
@@ -182,12 +168,11 @@ typedef struct LRC_configOptions{
 typedef struct LRC_configNamespace{
   char* space;
   LRC_configOptions* options;
-  int num;
   struct LRC_configNamespace* next;
 } LRC_configNamespace;
 
 /**
- * @struct LRC_configTypes
+ * @struct LRC_configDefaults
  * @brief Allowed types.
  * 
  * @param char
@@ -202,17 +187,37 @@ typedef struct LRC_configNamespace{
 typedef struct {
   char* space;
   char* name;
+  char* value;
   int type;
-} LRC_configTypes;
+} LRC_configDefaults;
 
 /**
  * Public API
  */
-int LRC_ASCIIParser(FILE*, char*, char*, LRC_configTypes*, int);
-int LRC_parseASCIIConfig(char*, char*, char*, LRC_configTypes* ct, int);
-int LRC_ASCIIwriter(FILE*, char*, char*, int);
-int LRC_writeASCIIConfig(char*, char*, char*, int);
-void LRC_printAll();
+
+/* Required */
+int LRC_assignDefaults(LRC_configDefaults*);
 void LRC_cleanup();
+
+/* Output */
+void LRC_printAll();
+
+/* Parsers and writers */
+int LRC_ASCIIParser(FILE* file, char* sep, char* comm);
+int LRC_ASCIIWriter(FILE* file, char* sep, char* comm);
+
+/* Search and modify */
+LRC_configNamespace* LRC_findNamespace(char* space);
+LRC_configOptions* LRC_findOption(char* var);
+LRC_configOptions* LRC_modifyOption(char* space, char* var, char* value, int type);
+int LRC_countOptions(char* space);
+char* LRC_getOptionValue(char* space, char* var);
+
+/* Converters */
+int LRC_option2int(char* space, char* var);
+float LRC_option2float(char* space, char* var);
+double LRC_option2double(char* space, char* var);
+long double LRC_option2Ldouble(char* space, char* var);
+int LRC_itoa(char* deststr, int value, int type);
 
 #endif

@@ -53,9 +53,13 @@
  * - customizable separator and comment marks
  * - namespaces
  * 
- * @example sample-config
- * @example sample-makefile
- * @example sample-readconfig.c
+ * @example lrc-config
+ * @example Makefile
+ * @example lrc-example.c
+ *
+ * @todo
+ * - better error and type checking
+ * - better trim
  */
 
 #include "libreadconfig.h"
@@ -63,6 +67,7 @@
   #include "libreadconfig_hdf5.h"
 #endif
 
+#include <string.h>
 /**
  * @defgroup LRC_internals Helper functions
  * @{
@@ -71,10 +76,10 @@ void LRC_message(int line, int type, char* message);
 char* LRC_trim(char*);
 char* LRC_nameTrim(char*);
 int LRC_charCount(char*, char*);
-int LRC_matchType(char*, char*, LRC_configTypes*, int);
+int LRC_matchType(char*, char*, LRC_configDefaults*, int);
 int LRC_checkType(char*, int);
 int LRC_isAllowed(int);
-int LRC_checkName(char*, LRC_configTypes*, int);
+int LRC_checkName(char*, LRC_configDefaults*, int);
 void LRC_newNamespace(char* cfg);
 
 #if HAVE_HDF5_H
@@ -156,7 +161,7 @@ char* LRC_trim(char* str){
   int i = 0, cnt = 0;
 
   /* Trap NULL.*/
-  if (str){
+  if (str != NULL){
  
     /* Remove leading spaces (from RMLEAD.C).*/
     for (ibuf = str; *ibuf && isspace(*ibuf); ++ibuf)
@@ -237,7 +242,7 @@ int LRC_charCount(char* l, char* s){
 }
 
 /**
- * @fn int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT)
+ * @fn int LRC_checkName(char* varname, LRC_configDefaults* ct, int numCT)
  * @brief Checks if variable is allowed.
  *
  * @param varname
@@ -252,7 +257,7 @@ int LRC_charCount(char* l, char* s){
  * @return
  *   0 on success, -1 otherwise.  
  */
-int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
+/*int LRC_checkName(char* varname, LRC_configDefaults* ct, int numCT){
    
   int i = 0, count = 0;
 
@@ -266,9 +271,9 @@ int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
     return -1;
 
 }
-
+*/
 /**
- * @fn int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT)
+ * @fn int LRC_matchType(char* varname, char* value, LRC_configDefaults* ct, int numCT)
  * @brief Match input type.
  *
  * @param varname
@@ -285,16 +290,15 @@ int LRC_checkName(char* varname, LRC_configTypes* ct, int numCT){
  *   
  * @return
  *   Returns type (integer value) on success, -1 otherwise.
- *   @see LRC_configTypes
+ *   @see LRC_configDefaults
  */
-int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
+/*int LRC_matchType(char* varname, char* value, LRC_configDefaults* ct, int numCT){
   
   int i = 0;
 
   while(i < numCT){
     if(strcmp(ct[i].name,varname) == 0){
       if(LRC_checkType(value, ct[i].type) != 0){ 
-/*        printf("Error: %s -> %s ", varname, value); */
         return -1;
       }else{
         return ct[i].type;
@@ -305,7 +309,7 @@ int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
   return 0;
 
 }
-
+*/
 /**
  * @fn int LRC_checkType(char* value, int type)
  * @brief Check type of the value.
@@ -315,12 +319,12 @@ int LRC_matchType(char* varname, char* value, LRC_configTypes* ct, int numCT){
  *
  * @param type
  *   The datatype for given value.
- *   @see LRC_configTypes
+ *   @see LRC_configDefaults
  *
  * @return
  *   0 on success, -1 otherwise.
  */
-int LRC_checkType(char* value, int type){
+/*int LRC_checkType(char* value, int type){
   
   int i = 0, ret = 0, k = 0;
   char *p;
@@ -332,7 +336,6 @@ int LRC_checkType(char* value, int type){
         if(isdigit(value[i]) || value[0] == '-'){ 
           ret = 0;
         }else{
-/*          printf("is not INT (followed by %d)\n", value[i]);*/
           ret = -1;
           break;
         }
@@ -344,7 +347,6 @@ int LRC_checkType(char* value, int type){
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
         ret = 0;
       }else{
-/*        printf("is not FLOAT (followed by %s)\n", p);*/
         ret = -1;
       }
       break;
@@ -354,17 +356,15 @@ int LRC_checkType(char* value, int type){
       if(value[0] != '\n' && (*p == '\n' || *p != '\0')){
         ret = 0;
       }else{
-/*        printf("is not DOUBLE (followed by %s)\n", p);*/
         ret = -1;
       }
       break;
 
-    case LRC_CHAR:
+    case LRC_STRING:
       for(i = 0; i < strlen(value); i++){
         if(isalpha(value[i]) || LRC_isAllowed(value[i]) == 0){
           ret = 0;
         }else{
-/*          printf("is not STRING (followed by %d)\n",value[i]);*/
           ret = -1;
           break;
         }
@@ -379,7 +379,7 @@ int LRC_checkType(char* value, int type){
   return ret;
 
 }
-
+*/
 /** 
  * @fn int LRC_isAllowed(int c)
  * @brief Check if given char is one of the allowed chars.
@@ -393,7 +393,7 @@ int LRC_checkType(char* value, int type){
  * @todo
  *   Allow user to override allowed char string.
  */
-int LRC_isAllowed(int c){
+/*int LRC_isAllowed(int c){
 
   char* allowed = "_-. ";
   int i = 0;
@@ -404,7 +404,7 @@ int LRC_isAllowed(int c){
 
   return 1;
 }
-
+*/
 /**
  * @fn void newNamespace(char* cfg)
  * @brief Helper function for creating new namespaces
@@ -419,11 +419,12 @@ void LRC_newNamespace(char* cfg){
   else  current->next = newNM;
 
   current = newNM;
-  newNM->space = malloc(strlen(cfg+1));
+  newNM->space = malloc(strlen(cfg+sizeof(char*)));
   strncpy(newNM->space, cfg, strlen(cfg));
-  newNM->space[strlen(cfg)]=LRC_NULL;
+  newNM->space[strlen(cfg)] = LRC_NULL;
   newNM->options = NULL;
   newNM->next = NULL;
+
 }
 
 /**
@@ -450,7 +451,7 @@ void LRC_newNamespace(char* cfg){
 /**
  *  Text parser
  *
- *  @fn int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int numCT)
+ *  @fn int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configDefaults* ct)
  *  @brief Reads config file, namespaces, variable names and values,
  *  into the options structure @see LRC_configNamespace.
  *
@@ -472,21 +473,19 @@ void LRC_newNamespace(char* cfg){
  *  @return
  *    Number of namespaces found in the config file on success, -1 otherwise.
  *
- *  @todo
- *    Check if the namespace is allowed.
  */
 
-int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int numCT){
+int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM){
   
-  int i = 0; int j = 0; int sepc = 0; int n = 0;
+  int j = 0; int sepc = 0; int n = 0;
   char* line; char l[LRC_MAX_LINE_LENGTH]; char* b; char* c;
-  char* name; char* value; 
-  int ret = 0; 
+  char* value; 
 
   LRC_configOptions* newOP = NULL;
-  LRC_configOptions* lastOP;
+  LRC_configNamespace* nextNM;
 
-  size_t p = 0;
+	char* tempaddr = NULL;
+
   size_t valuelen = 0;
 
   while(!feof(read)){
@@ -524,8 +523,16 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int 
       }
 
       b = LRC_nameTrim(b);
-      LRC_newNamespace(b);
-      i = 0;
+			
+			nextNM = LRC_findNamespace(b);
+			
+			if(nextNM == NULL){
+				LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_NAMESPACE);
+				goto failure;
+			}else{
+				current = nextNM;
+			}
+      
       n++;
 
       continue;
@@ -560,53 +567,32 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configTypes* ct, int 
     /* Ok, now we are prepared */
     c = LRC_trim(strtok(b,SEP));
 
-    /* Check if variable is allowed.
-     * We skip unknown variables silently */
-    if(LRC_checkName(c, ct, numCT) < 0){
-      /* LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); */
-      continue;
-    }
-
-    p = strlen(c);
-    newOP = malloc(sizeof(LRC_configOptions));
-    name = malloc(p+1);
-    strncpy(name, c, p);
-    name[p] = LRC_NULL;
-    newOP->name = name;
+		newOP = LRC_findOption(c);
+		
+		if(newOP == NULL){
+      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); 
+      goto failure;
+		}
 
     while (c!=NULL){
       if (c[0] == '\n') break;
 
       valuelen = strlen(c);
-      value = malloc(valuelen+1);
-      strncpy(value, c, valuelen);
-      value[valuelen] = LRC_NULL;
+			value = malloc(valuelen+sizeof(char*));
+			strncpy(value, c, valuelen);
+			value[valuelen] = LRC_NULL;
 
-      newOP->value = value;
-      c = LRC_trim(strtok(NULL,"\n"));
+			tempaddr = realloc(newOP->value,valuelen + sizeof(char*));
+			newOP->value = tempaddr;
+    	
+			strncpy(newOP->value, value, valuelen);
+			newOP->value[valuelen] = LRC_NULL;
+			
+			free(value);
+			c = LRC_trim(strtok(NULL,"\n"));
+
     }  
-
-    newOP->next = NULL;
-    ret = LRC_matchType(newOP->name, newOP->value, ct, numCT);
-    if(ret < 0){
-      LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_WRONG_INPUT); 
-      goto failure;
-    }
-
-    newOP->type = ret;
-
-    i++;
-    current->num = i;
-
-    if(current->options == NULL) 
-      current->options = newOP;
-    else{
-     lastOP = current->options;
-     while((lastOP->next) != NULL)
-       lastOP = lastOP->next;
-     lastOP->next = newOP;
-    }
-
+		
   }
   return n;
 
@@ -627,24 +613,24 @@ void LRC_cleanup(){
   current = head;
 
   do{
-    currentOP = current->options;
-    do {
-      if(currentOP){
-        nextOP = currentOP->next;
-        free(currentOP->value);
-        free(currentOP->name);
-        free(currentOP);
-        currentOP = nextOP;
-      }
-    }while(currentOP);
+    if(current != NULL){
+     currentOP = current->options;
+      do {
+        if(currentOP != NULL){
+          nextOP = currentOP->next;
+          if(currentOP->value != NULL) free(currentOP->value);
+          if(currentOP->name != NULL) free(currentOP->name);
+          free(currentOP);
+          currentOP = nextOP;
+        }
+      }while(currentOP != NULL);
 
-  if(current){
-    nextNM = current->next;
-    free(current->space);
-    free(current);
-    current=nextNM;
-  }
-  }while(current);
+      nextNM = current->next;
+      if(current->space != NULL) free(current->space);
+      free(current);
+      current=nextNM;
+   }
+  }while(current != NULL);
 
   head = NULL;
 
@@ -654,30 +640,23 @@ void LRC_cleanup(){
 /**
  * HDF5 parser 
  * 
- * @fn int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT)
+ * @fn int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct, int numCT)
  * @brief Parse config data stored in HDF5 files.
  *
  * @param file
  *   The handler of the file.
  *
- * @param cs
- *   Pointer to the structure of config data.
- *
  * @param ct
- *   Pointer to the structure with allowed datatypes.
- *
- * @param numCT
- *   Number of allowed datatypes.
+ *   Pointer to the structure with default values.
  *
  * @return
- *   Number of read namespaces.
+ *   Number of read namespaces or -1 on failure
  *
  * @todo
- *   - Type checking.
  *   - Open, rather than recreate compound datatype.
  *
  */
-int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
+int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
   
   hid_t group, dataset, dataspace;
   hid_t ccm_tid, name_dt, value_dt;
@@ -687,17 +666,15 @@ int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
   int numOfNM = 0, i = 0, k = 0;
   char link_name[LRC_MAX_LINE_LENGTH];
   ssize_t link;
-  ssize_t nlen, vlen;
+  ssize_t vlen;
   hsize_t edims[1], emaxdims[1];
 
+  LRC_configNamespace* nextNM;
   LRC_configOptions* newOP = NULL;
-  LRC_configOptions* lastOP;
 
+  char* tempaddr = NULL;
+  char* value;
   ccd_t* rdata;
-
-  /* NULL global pointers */
-  current = NULL;
-  head = NULL;
 
   /* For future me: how to open compound data type and read it,
    * without rebuilding memtype? Is this possible? */
@@ -729,7 +706,8 @@ int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
   for(i = 0; i < numOfNM; i++){
 
     /* Get name of dataspace -> the namespace */
-    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
+    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, 
+        link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
 
     /* Get size of the table with config data */
     dataset = H5Dopen(group, link_name, H5P_DEFAULT);
@@ -743,36 +721,40 @@ int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
     H5Sclose(dataspace);
     H5Dclose(dataset);
 
-    /* Create new namespace */
-    LRC_newNamespace(link_name);
-    current->num = (int)edims[0];
+    /* Check if namespace exists */
+    nextNM = LRC_findNamespace(link_name);
+    if(nextNM == NULL){
+				LRC_message(i, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_NAMESPACE);
+        goto failure;
+    }else{
+        current = nextNM;
+    }
 
     /* Assign values */
-    for(k = 0; k < current->num; k++){
-      newOP = malloc(sizeof(LRC_configOptions));
-
-      nlen = strlen(rdata[k].name);
-      newOP->name = malloc(nlen);
-      strcpy(newOP->name, rdata[k].name);
-
-      vlen = strlen(rdata->value);
-      newOP->value = malloc(vlen);
-      strcpy(newOP->value, rdata[k].value);
-
-      newOP->type = rdata[k].type;
+    for(k = 0; k < (int)edims[0]; k++){
       
-      newOP->next = NULL;
-
-      if(current->options == NULL){
-        current->options = newOP;
-      }else{
-        lastOP = current->options;
-        while((lastOP->next) != NULL){
-          lastOP = lastOP->next;
-        }
-        lastOP->next = newOP;
+      /* Find option and change the value */
+      newOP = LRC_findOption(rdata[k].name);
+      if(newOP == NULL){
+        LRC_message(i, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); 
+        goto failure;
       }
 
+      vlen = strlen(rdata[k].value);
+      value = malloc(vlen + sizeof(char*));
+      strncpy(value, rdata[k].value, vlen);
+      value[vlen] = LRC_NULL;
+
+      tempaddr = realloc(newOP->value, vlen + sizeof(char*));
+      newOP->value = tempaddr;
+
+      strncpy(newOP->value, value, vlen);
+      newOP->value[vlen] = LRC_NULL;
+    
+      newOP->type = rdata[k].type;
+
+      free(value);
+      
     }
 
     free(rdata);
@@ -782,6 +764,9 @@ int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
   H5Gclose(group);
  
   return numOfNM;
+
+failure:
+  return -1;
 }
 #endif
 
@@ -790,38 +775,12 @@ int LRC_HDF5Parser(hid_t file, LRC_configTypes* ct, int numCT){
  */
 
 /**
- * @defgroup LRC_wrappers Wrappers
- * @{
- * Wrapper functions for reading/writing config files.
- */
-
-/**
- * @fn void LRC_writeASCIIConfig(char* file, char* s, char* l, LRC_configNamespace* ct, int opts)
- * @brief Write config file. Wrapper for @see LRC_writeTextConfig() and @see LRC_writeHdfConfig()
- */
-int LRC_writeASCIIConfig(char* file, char* sep, char* comm, int opts){
-
-  FILE* write;
-  write = fopen(file, "w");
-  
-  if(write != NULL){
-    LRC_ASCIIwriter(write, sep, comm, opts);
-  }else{
-    perror("Error writing config file:");
-    return -1;
-  }
-
-  fclose(write);
-  return 0;
-}
-
-/**
- * @fn void LRC_ASCIIwriter(FILE*, char* sep, char* comm, int opts)
+ * @fn void LRC_ASCIIWriter(FILE*, char* sep, char* comm)
  * @brief Write ASCII config file.
  * @return
  *  Should return 0 on success, errcode otherwise
  */
-int LRC_ASCIIwriter(FILE* write, char* sep, char* comm, int opts){
+int LRC_ASCIIWriter(FILE* write, char* sep, char* comm){
 
   LRC_configOptions* currentOP;
   LRC_configOptions* nextOP;
@@ -865,7 +824,7 @@ int LRC_ASCIIwriter(FILE* write, char* sep, char* comm, int opts){
  *  Should return 0 on success, errcode otherwise
  *
  */
-int LRC_HDF5writer(hid_t file){
+int LRC_HDF5Writer(hid_t file){
 
   hid_t group, dataset, dataspace, memspace;
   hid_t ccm_tid, ccf_tid, name_dt, value_dt;
@@ -913,11 +872,12 @@ int LRC_HDF5writer(hid_t file){
    if(current){ 
 
       currentOP = current->options;
-      dims[0] = (hsize_t)current->num;
+      dims[0] = (hsize_t)LRC_countOptions(current->space);
       dims[1] = 1;
       dataspace = H5Screate_simple(1, dims, NULL);
     
-      dataset = H5Dcreate(group, current->space, ccf_tid, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      dataset = H5Dcreate(group, current->space, ccf_tid, dataspace, 
+          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     /* Write config data one by one in given namespace */
     k = 0;
@@ -926,12 +886,14 @@ int LRC_HDF5writer(hid_t file){
 
       /* Assign values */
       nlen = strlen(currentOP->name);
-      ccd->name = malloc(nlen);
-      strcpy(ccd->name, currentOP->name);
+      ccd->name = malloc(nlen + sizeof(char*));
+      strncpy(ccd->name, currentOP->name, nlen);
+			ccd->name[nlen] = LRC_NULL;
       
       vlen = strlen(currentOP->value);
-      ccd->value = malloc(vlen);
-      strcpy(ccd->value, currentOP->value);
+      ccd->value = malloc(vlen + sizeof(char*));
+      strncpy(ccd->value, currentOP->value, vlen);
+			ccd->value[vlen] = LRC_NULL;
       
       ccd->type = currentOP->type;
 
@@ -996,71 +958,402 @@ void LRC_printAll(){
   current = head;
 
   do{
-    if(current){
+    if(current != NULL){
       nextNM = current->next;
-      printf("\n[%s][%d]\n",current->space, current->num);
+      printf("[%s][%d]\n",current->space, LRC_countOptions(current->space));
       currentOP = current->options;
       do {
-        if(currentOP){
+        if(currentOP != NULL){
           nextOP = currentOP->next;
           printf("%s = %s [type %d]\n", currentOP->name, currentOP->value, currentOP->type);
           currentOP = nextOP;
         }
-      }while(currentOP);
+      }while(currentOP != NULL);
       
       current=nextNM;
     }
+		printf("\n");
     
-  }while(current);
+  }while(current != NULL);
 
 }
 
 /**
- * @fn int LRC_parseASCIIConfig(char* inif, char* sep, char* comm, LRC_configTypes* ct, int numCT)
- * @brief Wrapper function.
+ * @fn int LRC_assignDefaults()
+ * @brief Assign default values
  *
- * @param inif
- *   Name of the config file to read.
- *
- * @param sep
- *   The separator.
- *
- * @param comm
- *   The comment mark.
- * 
- * @param ct
- *   Pointer to allowed datatypes structure.
- *
- * @param numCT
- *   Number of allowed datatypes.
- *   
  * @return
- *    Number of namespaces found in the config file on success, -1 otherwise.
+ *  Should return 0 on success, errcode otherwise
+ */
+
+int LRC_assignDefaults(LRC_configDefaults* cd){
+
+  LRC_configNamespace* nextNM;
+  LRC_configOptions* newOP;
+  LRC_configOptions* currentOP;
+  size_t slen, nlen, vlen;
+  char* space; 
+  char* name; 
+  char* value; 
+  char* tempadd = NULL;
+
+  int i = 0;
+
+  head = NULL;
+  current = NULL;
+  
+  while(cd[i].space != NULL){
+
+      /* Prepare namespace */
+      slen = strlen(cd[i].space);
+      space = malloc(slen+sizeof(char*));
+      strncpy(space,cd[i].space, slen);
+			space[slen] = LRC_NULL;
+
+      nextNM = LRC_findNamespace(space);
+
+      if(nextNM == NULL){
+        LRC_newNamespace(space); 
+      }else{
+				current = nextNM;
+			}
+      
+      if(current != NULL){ 
+
+				currentOP = LRC_findOption(cd[i].name);
+
+        if(currentOP == NULL){  	
+					newOP = malloc(sizeof(LRC_configOptions));
+				
+				if(current->options == NULL){
+         	current->options = newOP;
+					currentOP = current->options;
+				}else{
+					currentOP = current->options;
+					while(currentOP->next != NULL){
+						currentOP = currentOP->next;
+					}
+					currentOP->next = newOP;
+					currentOP = newOP;
+				}
+
+				/* Prepare var name*/
+       	nlen = strlen(cd[i].name);
+       	name = malloc(nlen+sizeof(char*));
+       	strncpy(name, cd[i].name, nlen);
+				name[nlen] = LRC_NULL;
+       	
+				currentOP->name = malloc(nlen+sizeof(char*));
+       	strncpy(currentOP->name, name, nlen);
+				currentOP->name[nlen] = LRC_NULL;
+      
+				free(name);
+
+				}
+
+				/* Prepare the value 
+				 * If the variable already exists,
+				 * its value will be overriden
+				 * */
+        vlen = strlen(cd[i].value);
+        value = malloc(vlen+sizeof(char*));
+        strncpy(value, cd[i].value, vlen);
+				value[vlen] = LRC_NULL;
+
+        if(currentOP->value == NULL){
+          currentOP->value = malloc(vlen+sizeof(char*));
+        }else{
+          tempadd = realloc(currentOP->value, vlen + sizeof(char*));
+					currentOP->value = tempadd;
+        }
+        strncpy(currentOP->value, value, vlen);
+				currentOP->value[vlen] = LRC_NULL;
+      
+      	free(value);
+				
+				/* Assign type */
+				currentOP->type = cd[i].type;
+      }
+
+      free(space);
+      i++;
+
+  }
+
+  return 0;
+}
+
+/**
+ * @fn LRC_configNamespace* LRC_findNamespace(char* namespace)
+ * @brief Search for given namespace
+ *
+ * @param namespace
+ *  The name of the namespace to be searched for
+ *
+ * @return
+ *  Pointer to the namespace or NULL if namespace was not found
+ */
+LRC_configNamespace* LRC_findNamespace(char* namespace){
+  
+  LRC_configNamespace* result_nm;
+  LRC_configNamespace* test;
+  
+  result_nm = NULL;
+  test = head;
+
+  while(test != NULL){
+    if(strcmp(test->space, namespace) == 0){
+      result_nm = test;
+      break;
+    }
+    test = test->next;
+  }
+  return result_nm;
+}
+
+/**
+ * @fn LRC_configOptions* LRC_findOption(char* varname)
+ * @brief Search for given variable
+ *
+ * @param varname
+ *  The name of the variable to be searched for
+ *
+ * @return
+ *  The pointer to the variable or NULL if the variable was not found
  *
  */
-int LRC_parseASCIIConfig(char* inif, char* sep, char* comm, LRC_configTypes* ct, int numCT){
-  
-  FILE* read;
-  int opts;
+LRC_configOptions* LRC_findOption(char* varname){
 
-	read = fopen(inif,"r");
-	if(read != NULL){
-    
-    /* Read and parse config file.*/
-		opts = LRC_ASCIIParser(read, sep, comm, ct, numCT); 
-	}else{
-		perror("Error opening config file:");
-		return -1;
+  LRC_configOptions* testOP;
+  LRC_configOptions* ret;
+
+  testOP = current->options;
+	ret = NULL;
+
+  while(testOP != NULL){
+    if(testOP->name != NULL){
+      if(strcmp(testOP->name, varname) == 0){
+        ret = testOP;
+        break;
+      }
+    }
+    testOP = testOP->next;
+  }
+
+  return ret;
+}
+
+/**
+ * @fn LRC_configOptions* LRC_modifyOption(char* varname, char* newvalue, int newtype)
+ * @brief Modifies value and type of given option.
+ *
+ * @return
+ *  The pointer to modified option or NULL if option was not found
+ */
+LRC_configOptions* LRC_modifyOption(char* namespace, char* varname, char* newvalue, int newtype){
+	
+	LRC_configOptions* option = NULL;
+	char* tempaddr = NULL;
+	size_t vlen;
+
+	current = LRC_findNamespace(namespace);
+	option = LRC_findOption(varname);
+
+	vlen = strlen(newvalue);
+
+	if(option != NULL){
+		if(option->value != NULL){
+      if(strcmp(option->value, newvalue) != 0){
+			  tempaddr = realloc(option->value, vlen + sizeof(char*));
+			  option->value = tempaddr;
+      }
+		}else{
+			option->value = malloc(vlen + sizeof(char*));
+		}
+    if(strcmp(option->value, newvalue) != 0){
+		  strncpy(option->value, newvalue, vlen);
+		  option->value[vlen] = LRC_NULL;
+    }
+
+    if(option->type != newtype){
+		  option->type = newtype;
+    }
 	}
-	fclose(read);
+
+	return option;
+}
+
+char* LRC_getOptionValue(char* namespace, char* var){
+
+	LRC_configOptions* option = NULL;
+
+  current = LRC_findNamespace(namespace);
+  option = LRC_findOption(var);
+
+  return option->value;
+}
+
+/**
+ * @fn LRC_option2int(char* namespace, char* varname)
+ * @brief Converts the option to integer
+ *
+ * @return
+ *  Converted option
+ */
+int LRC_option2int(char* namespace, char* varname){
   
+  LRC_configOptions* option = NULL;
+  int value;
+  
+  current = LRC_findNamespace(namespace);
+  option = LRC_findOption(varname);
+
+  if(option != NULL){
+   if(option->value != NULL){
+    value = atoi(option->value);
+   }
+  }
+
+  return value;
+}
+
+/**
+ * @fn LRC_option2float(char* namespace, char* varname)
+ * @brief Converts the option to float
+ *
+ * @return
+ *  Converted option
+ */
+float LRC_option2float(char* namespace, char* varname){
+  
+  LRC_configOptions* option = NULL;
+  float value;
+  char* p;
+  
+  current = LRC_findNamespace(namespace);
+  option = LRC_findOption(varname);
+
+  if(option != NULL){
+   if(option->value != NULL){
+    value = strtof(option->value, &p);
+   }
+  }
+  
+  return value;
+}
+
+/**
+ * @fn LRC_option2double(char* namespace, char* varname)
+ * @brief Converts the option to double
+ *
+ * @return
+ *  Converted option
+ */
+double LRC_option2double(char* namespace, char* varname){
+  
+  LRC_configOptions* option = NULL;
+  double value;
+  char* p;
+  
+  current = LRC_findNamespace(namespace);
+  option = LRC_findOption(varname);
+
+  if(option != NULL){
+   if(option->value != NULL){
+    value = strtod(option->value, &p);
+   }
+  }
+  
+  return value;
+}
+
+/**
+ * @fn LRC_option2Ldouble(char* namespace, char* varname)
+ * @brief Converts the option to long double
+ *
+ * @return
+ *  Converted option
+ */
+long double LRC_option2Ldouble(char* namespace, char* varname){
+  
+  LRC_configOptions* option = NULL;
+  long double value;
+  char* p;
+  
+  current = LRC_findNamespace(namespace);
+  option = LRC_findOption(varname);
+
+  if(option != NULL){
+   if(option->value != NULL){
+    value = strtold(option->value, &p);
+   }
+  }
+
+  return value;
+}
+
+/**
+ * @fn LRC_countOptions(char* nm)
+ * @brief Counts number of options in given namespace
+ *
+ * @return
+ *  Number of options in given namespace, 0 otherwise
+ */
+int LRC_countOptions(char* nm){
+
+  LRC_configNamespace* nspace;
+  LRC_configOptions* option;
+  int opts = 0;
+
+  nspace = LRC_findNamespace(nm);
+
+  if(nspace != NULL){
+    option = nspace->options;
+    while(option != NULL){
+      opts++;
+      option = option->next;
+    }
+
+  }
+
   return opts;
 }
 
 /**
- * @}
+ * @fn int LRC_itoa(char* str, char* intval)
+ * @brief Implementation of itoa function
+ *
+ * The function converts numerical values to string. 
+ * For using it with integers, try:
+ * LRC_itoa(str, (int*)value, LRC_INT)
+ *
+ * For using it with floats and doubles, try:
+ * LRC_itao(str, &value, LRC_FLOAT/LRC_DOUBLE) etc.
+ *
+ * It is not clear for me if this is a good implementation. However, this is the
+ * only way I can do it in one function for all types of numerical values.
+ *
+ * For future me: implement it better, if this is possible in C
+ * 
+ * @todo
+ *  Error checking
+ *
+ * @return
+ *  Should return 0 on success, errcode otherwise
  */
+int LRC_itoa(char* str, int val, int type){
+
+  if(type == LRC_INT) sprintf(str, "%d", val);
+
+/*  if(type == LRC_LONGINT) sprintf(str, "%ld", (long int)val);
+  if(type == LRC_FLOAT) sprintf(str, "%f", *(float*)val);
+  if(type == LRC_DOUBLE) sprintf(str, "%lf", *(double*)val);
+  if(type == LRC_LONGDOUBLE) sprintf(str, "%Lf", *(long double*)val);
+*/
+  return 0;
+}
 
 /**
  * @}
  */
+

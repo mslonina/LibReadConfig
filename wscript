@@ -12,7 +12,7 @@ import Options
 
 import string
 
-VERSION='0.12.0'
+VERSION='0.12.0-alpha2'
 APPNAME='libreadconfig'
 URL='http://mechanics.astri.umk.pl/projects/libreadconfig'
 BUGS='mariusz.slonina@gmail.com'
@@ -81,6 +81,9 @@ def _check_std_headers(conf, stdlibs):
   conf.check_cc(function_name='strspn', header_name='string.h', mandatory=True)
   conf.check_cc(function_name='strstr', header_name='string.h', mandatory=True)
   conf.check_cc(function_name='strtol', header_name='stdlib.h', mandatory=True)
+#  conf.check_cc(function_name='strtold', header_name='stdlib.h', mandatory=True)
+#  conf.check_cc(function_name='strtof', header_name='stdlib.h', mandatory=True)
+  conf.check_cc(function_name='strtod', header_name='stdlib.h', mandatory=True)
   conf.check_cc(function_name='strtok', header_name='string.h', mandatory=True)
   conf.check_cc(function_name='strncpy', header_name='string.h', mandatory=True)
 
@@ -168,8 +171,10 @@ def configure(conf):
 	
   # Examples
   EXAMPLES="No"
+  conf.env.EXAMPLES = 0
   if Options.options.examples:
     EXAMPLES="Yes"
+    conf.env.EXAMPLES = 1
     pass
 	
 	
@@ -205,10 +210,21 @@ def build(bld):
   obj.includes = 'src'
   obj.target = 'readconfig'
   obj.uselib = 'HDF5'
+  
+  obj = bld.new_task_gen('cc', 'staticlib')
+  obj.source = ['src/libreadconfig.c']
+  obj.includes = 'src'
+  obj.target = 'readconfig'
+  obj.uselib = 'HDF5'
+  
   if bld.env.HDF5 == 1:
     bld.install_files('${PREFIX}/include', 'src/libreadconfig.h src/libreadconfig_hdf5.h')
   else:
     bld.install_files('${PREFIX}/include', 'src/libreadconfig.h')
+
+  if bld.env.EXAMPLES == 1:
+    bld.install_files('${PREFIX}/share/doc/libreadconfig/examples',
+    'doc/lrc-example.c doc/lrc-config doc/Sample-Makefile')
 
 #  pobj = bld(
 #    features = 'subst',
