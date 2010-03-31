@@ -67,51 +67,12 @@
   #include "libreadconfig_hdf5.h"
 #endif
 
-#include <string.h>
+#include "libreadconfig_internals.h"
+
 /**
  * @defgroup LRC_internals Helper functions
  * @{
  */
-void LRC_message(int line, int type, char* message);
-char* LRC_trim(char*);
-char* LRC_nameTrim(char*);
-int LRC_charCount(char*, char*);
-int LRC_matchType(char*, char*, LRC_configDefaults*, int);
-int LRC_checkType(char*, int);
-int LRC_isAllowed(int);
-int LRC_checkName(char*, LRC_configDefaults*, int);
-void LRC_newNamespace(char* cfg);
-
-#if HAVE_HDF5_H
-/**
- * @var typedef struct ccd_t
- * @brief Helper datatype used for HDF5 storage
- *
- * @param name
- *  Name of the variable
- * 
- * @param value
- *  Value of the variable
- *
- * @param type
- *  Type of the variable
- */
-typedef struct{
-  char* name;
-  char* value;
-  int type;
-} ccd_t;
-#endif
-
-/**
- * @var LRC_configNamespace* head
- *  @brief Linked list head element
- *
- * @var LRC_configNamespace* current
- *  @brief Linked list current element
- */
-LRC_configNamespace* head;
-LRC_configNamespace* current;
 
 /**
  * @fn void LRC_message(int j, int type, char* message)
@@ -604,7 +565,7 @@ failure:
  * @fn void LRC_cleanup()
  * @brief Cleanup assign pointers. This is required for proper memory managment.
  */
-void LRC_cleanup(){
+void LRC_cleanup(void){
 
   LRC_configOptions* currentOP;
   LRC_configOptions* nextOP;
@@ -660,12 +621,11 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
   
   hid_t group, dataset, dataspace;
   hid_t ccm_tid, name_dt, value_dt;
-  herr_t status, info;
+  herr_t status;
   H5G_info_t group_info;
   
   int numOfNM = 0, i = 0, k = 0;
   char link_name[LRC_MAX_LINE_LENGTH];
-  ssize_t link;
   ssize_t vlen;
   hsize_t edims[1], emaxdims[1];
 
@@ -682,9 +642,11 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
   /* Create variable length string datatype */
   name_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(name_dt, H5T_VARIABLE);
+  if(status < 0) goto failure;
 
   value_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(value_dt, H5T_VARIABLE);
+  if(status < 0) goto failure;
 
   /* Create compound datatype for the memory */
   ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
@@ -697,7 +659,8 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
   group = H5Gopen(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
 
   /* Get group info */
-  info = H5Gget_info(group, &group_info);
+  status = H5Gget_info(group, &group_info);
+  if(status < 0) goto failure;
 
   /* Get number of opts (dataspaces) */
   numOfNM = group_info.nlinks;
@@ -706,7 +669,7 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
   for(i = 0; i < numOfNM; i++){
 
     /* Get name of dataspace -> the namespace */
-    link = H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, 
+    H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, 
         link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
 
     /* Get size of the table with config data */
@@ -717,9 +680,13 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
     /* We will get all data first */
     rdata = malloc((int)edims[0]*sizeof(ccd_t));
     status = H5Dread(dataset, ccm_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
+    if(status < 0) goto failure;
     
-    H5Sclose(dataspace);
-    H5Dclose(dataset);
+    status = H5Sclose(dataspace);
+    if(status < 0) goto failure;
+    
+    status = H5Dclose(dataset);
+    if(status < 0) goto failure;
 
     /* Check if namespace exists */
     nextNM = LRC_findNamespace(link_name);
@@ -760,8 +727,11 @@ int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
     free(rdata);
   }
 
-  H5Tclose(ccm_tid);
-  H5Gclose(group);
+  status = H5Tclose(ccm_tid);
+  if(status < 0) goto failure;
+  
+  status = H5Gclose(group);
+  if(status < 0) goto failure;
  
   return numOfNM;
 
@@ -847,9 +817,11 @@ int LRC_HDF5Writer(hid_t file){
   /* Create variable length string datatype */
   name_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(name_dt, H5T_VARIABLE);
+  if(status < 0) goto failure;
 
   value_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(value_dt, H5T_VARIABLE);
+  if(status < 0) goto failure;
 
   /* Create compound datatype for the memory */
   ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
@@ -862,11 +834,17 @@ int LRC_HDF5Writer(hid_t file){
   ccf_tid = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t) + sizeof(hvl_t));
 
   status = H5Tinsert(ccf_tid, "Name", 0, name_dt);
+  if(status < 0) goto failure;
+  
   status = H5Tinsert(ccf_tid, "Value", sizeof(hvl_t), value_dt);
+  if(status < 0) goto failure;
+  
   status = H5Tinsert(ccf_tid, "Type", sizeof(hvl_t) + sizeof(hvl_t),H5T_NATIVE_INT);
+  if(status < 0) goto failure;
 
   /* Commit datatype */
   status = H5Tcommit(file, LRC_HDF5_DATATYPE, ccf_tid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  if(status < 0) goto failure;
       
   do{
    if(current){ 
@@ -912,9 +890,13 @@ int LRC_HDF5Writer(hid_t file){
 
       memspace = H5Screate_simple(1, dimsm, NULL);
       status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
+      if(status < 0) goto failure;
 
       status = H5Dwrite(dataset, ccm_tid, memspace, dataspace, H5P_DEFAULT, ccd);
+      if(status < 0) goto failure;
+      
       status = H5Sclose(memspace);
+      if(status < 0) goto failure;
 
       free(ccd->name);
       free(ccd->value);
@@ -926,7 +908,10 @@ int LRC_HDF5Writer(hid_t file){
     }while(currentOP);
 
     status = H5Dclose(dataset);
+    if(status < 0) goto failure;
+    
     status = H5Sclose(dataspace);
+    if(status < 0) goto failure;
 
     nextNM = current->next;
     current = nextNM;
@@ -934,14 +919,25 @@ int LRC_HDF5Writer(hid_t file){
   }while(current);
 
   status = H5Gclose(group);
+  if(status < 0) goto failure;
+  
   status = H5Tclose(name_dt);
+  if(status < 0) goto failure;
+  
   status = H5Tclose(value_dt);
+  if(status < 0) goto failure;
+  
   status = H5Tclose(ccf_tid);
+  if(status < 0) goto failure;
+  
   status = H5Tclose(ccm_tid);
+  if(status < 0) goto failure;
 
   free(ccd);
 
   return 0;
+failure:
+  return -1;
 }
 #endif
 
@@ -949,7 +945,7 @@ int LRC_HDF5Writer(hid_t file){
  * @fn void LRC_printAll()
  * @brief Prints all options.
  */
-void LRC_printAll(){
+void LRC_printAll(void){
 
   LRC_configOptions* currentOP;
   LRC_configOptions* nextOP;
