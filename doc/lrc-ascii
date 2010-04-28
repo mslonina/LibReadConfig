@@ -1,0 +1,16 @@
+# Written by LibReadConfig 
+[default]
+inidata = hehe.dat
+nprocs = 4
+bodies = 39
+
+[logs]
+dump = 234
+period = 928.91234e+2
+epoch = 2507.23
+
+[farm]
+xres = 23
+yres = 98
+
+

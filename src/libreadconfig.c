@@ -617,7 +617,7 @@ void LRC_cleanup(void){
  *   - Open, rather than recreate compound datatype.
  *
  */
-int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct){
+int LRC_HDF5Parser(hid_t file){
   
   hid_t group, dataset, dataspace;
   hid_t ccm_tid, name_dt, value_dt;
