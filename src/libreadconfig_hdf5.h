@@ -52,7 +52,7 @@
 #define LRC_CONFIG_GROUP "config"
 #define LRC_HDF5_DATATYPE "LRC_Config"
 
-int LRC_HDF5Parser(hid_t, LRC_configDefaults*);
+int LRC_HDF5Parser(hid_t);
 int LRC_HDF5Writer(hid_t);
 
 #endif

@@ -197,10 +197,10 @@ typedef struct {
 
 /* Required */
 int LRC_assignDefaults(LRC_configDefaults*);
-void LRC_cleanup();
+void LRC_cleanup(void);
 
 /* Output */
-void LRC_printAll();
+void LRC_printAll(void);
 
 /* Parsers and writers */
 int LRC_ASCIIParser(FILE* file, char* sep, char* comm);
