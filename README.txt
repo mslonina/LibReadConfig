@@ -1,1 +1,2 @@
-See documentation at mechanics.astri.umk.pl/node/16
+See documentation at 
+http://git.astri.umk.pl/projects/lrc

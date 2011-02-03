@@ -1,23 +1,20 @@
 /*
- * LIBREADCONFIG Copyright (c) 2010, Mariusz Slonina (Nicolaus Copernicus University)
+ * LIBREADCONFIG
+ *
+ * Copyright (c) 2010-2011, Mariusz Slonina (Nicolaus Copernicus University)
  * All rights reserved.
- * 
- * This file is part of LIBREADCONFIG code. 
  *
  * LIBREADCONFIG was created to help in handling config files by providing common
  * tools and including HDF5 support. The code was released in in belief it will be 
  * useful. If you are going to use this code, or its parts, please consider referring 
  * to the authors either by the website or the user guide reference.
  *
- * http://mechanics.astri.umk.pl/projects/libreadconfig
+ * See http://git.astri.umk.pl/projects/lrc
  *
- * User guide should be provided with the package or 
- * http://mechanics.astri.umk.pl/projects/mechanic/libreadconfig_userguide.pdf
- *
- * Redistribution and use in source and binary forms, 
- * with or without modification, are permitted provided 
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
  * that the following conditions are met:
- * 
+ *
  *  - Redistributions of source code must retain the above copyright notice, 
  *    this list of conditions and the following disclaimer.
  *  - Redistributions in binary form must reproduce the above copyright notice, 
@@ -26,7 +23,7 @@
  *  - Neither the name of the Nicolaus Copernicus University nor the names of 
  *    its contributors may be used to endorse or promote products derived from 
  *    this software without specific prior written permission.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
