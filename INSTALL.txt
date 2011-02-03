@@ -1,0 +1,13 @@
+LIBREADCONFIG uses Cmake >= 2.8
+
+> mkdir build
+> cd build
+> cmake ..
+or, if you want to include HDF5 support
+> cmake .. -DBUILD_HDF5:BOOL=ON
+> make
+> make install
+
+By default, it will install to /usr/local.
+For more options, see cmake --help.
+
