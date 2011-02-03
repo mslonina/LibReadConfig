@@ -29,3 +29,6 @@ autom4te.cache
 .lock-wscript
 .waf-*
 .lock-wscript
+.cmake
+CMake*
+!CMakeLists.txt
