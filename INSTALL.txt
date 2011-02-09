@@ -1,13 +1,27 @@
-LIBREADCONFIG uses Cmake >= 2.8
+Requirements
+------------
 
-> mkdir build
-> cd build
-> cmake ..
-or, if you want to include HDF5 support
-> cmake .. -DBUILD_HDF5:BOOL=ON
-> make
-> make install
+- CMake >= 2.8
+- HDF5 >= 1.8 (optional)
 
-By default, it will install to /usr/local.
-For more options, see cmake --help.
+Compilation
+-----------
 
+    tar -xvvf libreadconfig.tar.gz
+    cd libreadconfig-VERSION
+    mkdir build
+    cd build
+    cmake ..
+    make
+    make install
+
+If you want to include HDF5 support
+
+    cmake .. -DBUILD_HDF5:BOOL=ON
+
+By default, it will install to /usr/local. To change this use:
+
+   -DCMAKE_INSTALL_PREFIX:PATH=/your/path
+
+There is also universal binary for Mac/Intel provided on the project's website:
+http://git.astri.umk.pl/projects/lrc
