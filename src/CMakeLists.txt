@@ -1,7 +1,7 @@
 include_directories(.)
 add_library (readconfig SHARED libreadconfig.c)
 
-install (TARGETS readconfig DESTINATION lib)
+install (TARGETS readconfig DESTINATION lib${LIB_SUFFIX})
 install (FILES libreadconfig.h DESTINATION include)
 
 if (BUILD_HDF5)
