@@ -39,10 +39,6 @@
 #ifndef LIBREADCONFIG_HDF5_H
 #define LIBREADCONFIG_HDF5_H
 
-#if HAVE_CONFIG_H
- #include <config.h>
-#endif
-
 #include "libreadconfig.h"
 #include "hdf5.h"
 
