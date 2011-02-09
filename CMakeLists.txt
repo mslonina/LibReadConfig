@@ -7,6 +7,7 @@ option (BUILD_DOCS "Build documentation" off)
 include (CheckIncludeFiles)
 include (CheckLibraryExists)
 include (CheckCSourceCompiles)
+include (CPack)
 
 CHECK_INCLUDE_FILES (stdio.h HAVE_STDIO_H)
 CHECK_INCLUDE_FILES (dlfcn.h HAVE_DLFCN_H)
@@ -51,7 +52,5 @@ SET (CPACK_PACKAGE_VERSION_PATCH "0-alpha3")
 SET (CPACK_PACKAGE_INSTALL_DIRECTORY "/usr/local")
 SET (CPACK_SOURCE_IGNORE_FILES
   "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
-
-INCLUDE(CPACK)
 
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
