@@ -39,9 +39,6 @@
 #ifndef LIBREADCONFIG_H
 #define LIBREADCONFIG_H
 
-#if HAVE_CONFIG_H
- #include <config.h>
-#endif
 /**
  * @file
  * @brief LibreadConfig public library.
