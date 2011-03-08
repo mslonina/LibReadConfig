@@ -47,7 +47,8 @@ int LRC_matchType(char*, char*, LRC_configDefaults*, int);
 int LRC_checkType(char*, int);
 int LRC_isAllowed(int);
 int LRC_checkName(char*, LRC_configDefaults*, int);
-void LRC_newNamespace(char* cfg);
+LRC_configNamespace* LRC_newNamespace(char* cfg);
+LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head);
 
 #if HAVE_HDF5_H
 /**
@@ -77,8 +78,8 @@ typedef struct{
  * @var LRC_configNamespace* current
  *  @brief Linked list current element
  */
-LRC_configNamespace* head;
-LRC_configNamespace* current;
+//LRC_configNamespace* head;
+//LRC_configNamespace* current;
 
 #endif
 

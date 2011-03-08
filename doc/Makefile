@@ -1,12 +1,12 @@
 all: lrc-example lrc-example-hdf
 
 lrc-example:
-	gcc -c lrc-example.c -o lrc-example.o
-	gcc lrc-example.o -o lrc-example ${LDFLAGS} -lreadconfig
+	mpicc -c lrc-example.c -o lrc-example.o
+	mpicc lrc-example.o -o lrc-example -lreadconfig
 
 lrc-example-hdf:
-	gcc -c lrc-example.c -o lrc-example.o -DHAVE_HDF5_H
-	gcc lrc-example.o -o lrc-example-hdf ${LDFLAGS} -lreadconfig -lhdf5
+	mpicc -c lrc-example.c -o lrc-example.o -DHAVE_HDF5_H
+	mpicc lrc-example.o -o lrc-example-hdf -lreadconfig -lhdf5
 
 clean:
 	rm -f *.o lrc-example lrc-example-hdf

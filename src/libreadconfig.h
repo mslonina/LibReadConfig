@@ -190,28 +190,28 @@ typedef struct {
  */
 
 /* Required */
-int LRC_assignDefaults(LRC_configDefaults*);
-void LRC_cleanup(void);
+LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd);
+void LRC_cleanup(LRC_configNamespace* head);
 
 /* Output */
-void LRC_printAll(void);
+void LRC_printAll(LRC_configNamespace* head);
 
 /* Parsers and writers */
-int LRC_ASCIIParser(FILE* file, char* sep, char* comm);
-int LRC_ASCIIWriter(FILE* file, char* sep, char* comm);
+int LRC_ASCIIParser(FILE* file, char* sep, char* comm, LRC_configNamespace* head);
+int LRC_ASCIIWriter(FILE* file, char* sep, char* comm, LRC_configNamespace* head);
 
 /* Search and modify */
-LRC_configNamespace* LRC_findNamespace(char* space);
-LRC_configOptions* LRC_findOption(char* var);
-LRC_configOptions* LRC_modifyOption(char* space, char* var, char* value, int type);
-int LRC_countOptions(char* space);
-char* LRC_getOptionValue(char* space, char* var);
+LRC_configNamespace* LRC_findNamespace(char* space, LRC_configNamespace* head);
+LRC_configOptions* LRC_findOption(char* var, LRC_configNamespace* current);
+LRC_configOptions* LRC_modifyOption(char* space, char* var, char* value, int type, LRC_configNamespace* head);
+int LRC_countOptions(char* space, LRC_configNamespace* head);
+char* LRC_getOptionValue(char* space, char* var, LRC_configNamespace* current);
 
 /* Converters */
-int LRC_option2int(char* space, char* var);
-float LRC_option2float(char* space, char* var);
-double LRC_option2double(char* space, char* var);
-long double LRC_option2Ldouble(char* space, char* var);
+int LRC_option2int(char* space, char* var, LRC_configNamespace* head);
+float LRC_option2float(char* space, char* var, LRC_configNamespace* head);
+double LRC_option2double(char* space, char* var, LRC_configNamespace* head);
+long double LRC_option2Ldouble(char* space, char* var, LRC_configNamespace* head);
 int LRC_itoa(char* deststr, int value, int type);
 
 #endif
