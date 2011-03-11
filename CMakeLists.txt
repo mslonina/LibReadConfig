@@ -3,9 +3,9 @@ project (libreadconfig)
 
 set (LRC_VERSION_MAJOR 0)
 set (LRC_VERSION_MINOR 12)
-set (LRC_VERSION_PATCH 0-ALPHA-3)
+set (LRC_VERSION_PATCH 0-ALPHA-4)
 
-option (BUILD_HDF5 "Build HDF5 bindings" off)
+option (BUILD_HDF5 "Build HDF5 bindings" on)
 option (BUILD_DOCS "Build documentation" off)
 
 include (CheckIncludeFiles)
@@ -54,8 +54,8 @@ SET (CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${LRC_VERSION_MAJOR}.${LRC_VERSION_MINOR}.${LRC_VERSION_PATCH}-src")
 SET (CPACK_PACKAGE_INSTALL_DIRECTORY "/usr/local")
 SET (CPACK_SOURCE_IGNORE_FILES
-  "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
+  "/build/;/.DS_Store;/.gitignore;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-include (CPack)
+include (cpack)
 
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
