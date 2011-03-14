@@ -35,10 +35,10 @@ CONFIGURE_FILE (
 add_definitions (-Wall -std=c99 -DHAVE_CONFIG_H)
 
 if (BUILD_HDF5)
-  #CHECK_LIBRARY_EXISTS (hdf5 H5Dopen2 "" HDF5_LIB)
-  #if (HDF5_LIB)
+  CHECK_LIBRARY_EXISTS (hdf5 H5Dopen2 "" HDF5_LIB)
+  if (HDF5_LIB)
     add_definitions (-DHAVE_HDF5_H)
-    #endif (HDF5_LIB)
+  endif (HDF5_LIB)
 endif (BUILD_HDF5)
 
 add_subdirectory(src)
