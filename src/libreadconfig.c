@@ -372,16 +372,20 @@ LRC_configNamespace* LRC_newNamespace(char* cfg){
   LRC_configNamespace* newNM;
 
   newNM = malloc(sizeof(LRC_configNamespace));
+  if (!newNM) {
+    perror("LRC_newNamespace: line 376 malloc failed.");
+    return NULL;
+  }
 
-  //current = newNM;
   newNM->space = malloc(strlen(cfg+sizeof(char*)));
+  if (!newNM->space) {
+    perror("LRC_newNamespace: line 382 malloc failed.");
+    return NULL;
+  }
   strncpy(newNM->space, cfg, strlen(cfg));
   newNM->space[strlen(cfg)] = LRC_NULL;
   newNM->options = NULL;
   newNM->next = NULL;
-
-  //if(head == NULL) head = newNM;
-  //else  current->next = newNM;
 
   return newNM;
 }
@@ -441,7 +445,7 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
   char* value; 
 
   LRC_configOptions* newOP = NULL;
-  LRC_configNamespace* nextNM;
+  LRC_configNamespace* nextNM = NULL;
   LRC_configNamespace* current = NULL;
 
 	char* tempaddr = NULL;
@@ -541,18 +545,34 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
 
       valuelen = strlen(c);
 			value = malloc(valuelen+sizeof(char*));
+      if (!value) {
+        perror("LRC_ASCIIParser: line 549 malloc failed");
+        goto failure;
+      }
 			strncpy(value, c, valuelen);
 			value[valuelen] = LRC_NULL;
 
-			tempaddr = realloc(newOP->value,valuelen + sizeof(char*));
+      if (newOP->value) {
+			  tempaddr = realloc(newOP->value,valuelen + sizeof(char*));
+        if (!tempaddr) {
+          perror("LRC_ASCIIParser: line 555 realloc failed");
+          goto failure;
+        }
+      } else {
+        newOP->value = malloc(valuelen+sizeof(char*));
+        if (!newOP->value) {
+          perror("LRC_ASCIIParser: line 565 realloc failed");
+          goto failure;
+        }
+      }
 			newOP->value = tempaddr;
     	
 			strncpy(newOP->value, value, valuelen);
 			newOP->value[valuelen] = LRC_NULL;
 			
-			free(value);
 			c = LRC_trim(strtok(NULL,"\n"));
 
+			if(value) free(value);
     }  
 		
   }
@@ -568,32 +588,30 @@ failure:
  */
 void LRC_cleanup(LRC_configNamespace* head){
 
-  LRC_configOptions* currentOP;
-  LRC_configOptions* nextOP;
-  LRC_configNamespace* nextNM;
-  LRC_configNamespace* current;
+  LRC_configOptions* currentOP = NULL;
+  LRC_configOptions* nextOP = NULL;
+  LRC_configNamespace* nextNM = NULL;
+  LRC_configNamespace* current = NULL;
 
   current = head;
 
-  do{
-    if(current != NULL){
-     currentOP = current->options;
-      do {
-        if(currentOP != NULL){
-          nextOP = currentOP->next;
-          if(currentOP->value != NULL) free(currentOP->value);
-          if(currentOP->name != NULL) free(currentOP->name);
-          free(currentOP);
-          currentOP = nextOP;
-        }
-      }while(currentOP != NULL);
+  while(current) {
+    nextNM = current->next;
+    currentOP = current->options;
+      
+    while(currentOP) {
+      nextOP = currentOP->next;
+      if(currentOP->value) free(currentOP->value);
+      if(currentOP->name) free(currentOP->name);
+      if(currentOP) free(currentOP);
+      currentOP = nextOP;
+    }
 
-      nextNM = current->next;
-      if(current->space != NULL) free(current->space);
-      free(current);
-      current=nextNM;
-   }
-  }while(current != NULL);
+    if(current->space) free(current->space);
+    if(current) free(current);
+    current=nextNM;
+    
+  }
 
   head = NULL;
 
@@ -682,6 +700,10 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
     
     /* We will get all data first */
     rdata = malloc((int)edims[0]*sizeof(ccd_t));
+    if (!rdata) {
+      perror("LRC_HDFParser: line 698 malloc failed");
+      goto failure;
+    }
     status = H5Dread(dataset, ccm_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
     if(status < 0) goto failure;
     
@@ -712,10 +734,18 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
 
       vlen = strlen(rdata[k].value);
       value = malloc(vlen + sizeof(char*));
+      if (!value) {
+        perror("LRC_HDFParser: line 732 malloc failed");
+        goto failure;
+      }
       strncpy(value, rdata[k].value, vlen);
       value[vlen] = LRC_NULL;
 
       tempaddr = realloc(newOP->value, vlen + sizeof(char*));
+      if (!tempaddr) {
+        perror("LRC_HDFParser: line 741 malloc failed");
+        goto failure;
+      }
       newOP->value = tempaddr;
 
       strncpy(newOP->value, value, vlen);
@@ -814,6 +844,10 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
 
   ccd_t* ccd;
   ccd = malloc(sizeof(ccd_t));
+  if (!ccd) {
+    perror("LRC_HDFWriter: line 838 malloc failed");
+    goto failure;
+  }
 
   group = H5Gcreate(file, LRC_CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
@@ -870,11 +904,19 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
       /* Assign values */
       nlen = strlen(currentOP->name);
       ccd->name = malloc(nlen + sizeof(char*));
+      if (!ccd->name) {
+        perror("LRC_HDFWriter: line 896 malloc failed");
+        goto failure;
+      }
       strncpy(ccd->name, currentOP->name, nlen);
 			ccd->name[nlen] = LRC_NULL;
       
       vlen = strlen(currentOP->value);
       ccd->value = malloc(vlen + sizeof(char*));
+      if (!ccd->value) {
+        perror("LRC_HDFWriter: line 907 malloc failed");
+        goto failure;
+      }
       strncpy(ccd->value, currentOP->value, vlen);
 			ccd->value[vlen] = LRC_NULL;
       
@@ -1011,6 +1053,10 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
       /* Prepare namespace */
       slen = strlen(cd[i].space);
       space = malloc(slen+sizeof(char*));
+      if (!space) {
+        perror("LRC_assignDefaults: line 1047 malloc failed");
+        return NULL;
+      }
       strncpy(space,cd[i].space, slen);
 			space[slen] = LRC_NULL;
 
@@ -1028,6 +1074,8 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 				  current = nextNM;
 			  }
       }
+
+      free(space);
       
       if(current != NULL){ 
 
@@ -1035,6 +1083,10 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 
         if(currentOP == NULL){  	
 					newOP = malloc(sizeof(LRC_configOptions));
+          if (!newOP) {
+            perror("LRC_assignDefaults: line 1075 malloc failed");
+            return NULL;
+          }
 				
 				  if(current->options == NULL){
          	  current->options = newOP;
@@ -1051,6 +1103,10 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 				/* Prepare var name*/
        	nlen = strlen(cd[i].name);
        	name = malloc(nlen+sizeof(char*));
+        if (!name) {
+          perror("LRC_assignDefaults: line 1095 malloc failed");
+          return NULL;
+        }
        	strncpy(name, cd[i].name, nlen);
 				name[nlen] = LRC_NULL;
        	
@@ -1068,13 +1124,25 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 				 * */
         vlen = strlen(cd[i].value);
         value = malloc(vlen+sizeof(char*));
+        if (!value) {
+          perror("LRC_assignDefaults: line 1116 malloc failed");
+          return NULL;
+        }
         strncpy(value, cd[i].value, vlen);
 				value[vlen] = LRC_NULL;
 
         if(currentOP->value == NULL){
           currentOP->value = malloc(vlen+sizeof(char*));
+          if (!currentOP->value) {
+            perror("LRC_assignDefaults: line 1125 malloc failed");
+            return NULL;
+          }
         }else{
           tempadd = realloc(currentOP->value, vlen + sizeof(char*));
+          if (!tempadd) {
+            perror("LRC_assignDefaults: line 1131 malloc failed");
+            return NULL;
+          }
 					currentOP->value = tempadd;
         }
         strncpy(currentOP->value, value, vlen);
@@ -1086,7 +1154,6 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 				currentOP->type = cd[i].type;
       }
 
-      free(space);
       i++;
 
   }
@@ -1193,10 +1260,18 @@ LRC_configOptions* LRC_modifyOption(char* namespace, char* varname, char* newval
 		if(option->value != NULL){
       if(strcmp(option->value, newvalue) != 0){
 			  tempaddr = realloc(option->value, vlen + sizeof(char*));
+          if (!tempaddr) {
+            perror("LRC_assignDefaults: line 1253 malloc failed");
+            return NULL;
+          }
 			  option->value = tempaddr;
       }
 		}else{
 			option->value = malloc(vlen + sizeof(char*));
+      if (!option->value) {
+        perror("LRC_assignDefaults: line 1261 malloc failed");
+        return NULL;
+      }
 		}
     if(strcmp(option->value, newvalue) != 0){
 		  strncpy(option->value, newvalue, vlen);

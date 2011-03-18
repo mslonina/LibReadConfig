@@ -69,24 +69,29 @@ int main(int argc, char* argv[]){
 	/* Parse ASCII config file. 
    * Will override defaults and ignore any option not included in defaults
    * */
+  printf("B-A\n");
 	inif = fopen("lrc-config","ro");
   if(inif != NULL){
 	  nms = LRC_ASCIIParser(inif, sep, comm, head);
+  printf("B-B\n");
   }else{
     perror("Error opening file: ");
     exit(-1);
   }
 	fclose(inif);
+  printf("B-C\n");
 
   /* LRC_modifyOption
    * This will modify the value and type of given option
    */
 	LRC_modifyOption("logs", "dump","234", LRC_INT, head);
+  printf("B-D\n");
 
 	/* Write new config file */
 	inif = fopen("lrc-ascii", "w");
   if(inif != NULL){
 	  LRC_ASCIIWriter(inif, sep, comm, head);
+  printf("B-E\n");
   }else{
     perror("Error opening file for write: ");
     exit(-1);

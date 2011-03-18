@@ -1,6 +1,6 @@
 #first line comment
 [default] #namespace
-inidata=hehe.dat #initial data
+inidata=hehe.dat #inline comment
 nprocs=4
 bodies=39
 
