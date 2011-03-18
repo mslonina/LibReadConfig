@@ -15,9 +15,9 @@ Compilation
     make
     make install
 
-If you want to include HDF5 support
+If you want to disable HDF5 support
 
-    cmake .. -DBUILD_HDF5:BOOL=ON
+    cmake .. -DBUILD_HDF5:BOOL=OFF
 
 By default, it will install to /usr/local. To change this use:
 
