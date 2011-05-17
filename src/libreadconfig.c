@@ -1173,21 +1173,19 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
  */
 LRC_configNamespace* LRC_findNamespace(char* namespace, LRC_configNamespace* head){
   
-  LRC_configNamespace* result_nm = NULL;
   LRC_configNamespace* test = NULL;
   
   if (head && namespace) {
     test = head;
 
     while (test) {
-      if(strcmp(test->space, namespace) == 0){
-        result_nm = test;
-        break;
+      if (strcmp(test->space, namespace) == 0) {
+        return test;
       }
       test = test->next;
     }
   }
-  return result_nm;
+  return NULL;
 }
 
 LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head) {
@@ -1222,17 +1220,15 @@ LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head) {
 LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
 
   LRC_configOptions* testOP = NULL;
-  LRC_configOptions* ret = NULL;
 
-  if (current) {
+  if (current && varname) {
     if (current->options) {
       testOP = current->options;
 
-      while(testOP){
-        if(testOP->name){
-          if(strcmp(testOP->name, varname) == 0){
-            ret = testOP;
-            break;
+      while (testOP) {
+        if (testOP->name) {
+          if (strcmp(testOP->name, varname) == 0) {
+            return testOP;
           }
         }
         testOP = testOP->next;
@@ -1240,7 +1236,7 @@ LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
     }
   }
 
-  return ret;
+  return NULL;
 }
 
 /**
