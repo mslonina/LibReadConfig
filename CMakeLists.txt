@@ -3,7 +3,7 @@ project (libreadconfig)
 
 set (LRC_VERSION_MAJOR 0)
 set (LRC_VERSION_MINOR 12)
-set (LRC_VERSION_PATCH 0-ALPHA-5)
+set (LRC_VERSION_PATCH 0-ALPHA-6)
 
 option (BUILD_HDF5 "Build HDF5 bindings" on)
 option (BUILD_DOCS "Build documentation" off)
@@ -35,7 +35,8 @@ CONFIGURE_FILE (
 add_definitions (-Wall -std=c99 -DHAVE_CONFIG_H)
 
 if (BUILD_HDF5)
-  CHECK_LIBRARY_EXISTS (hdf5 H5Dopen2 "" HDF5_LIB)
+  CHECK_INCLUDE_FILES (hdf5.h HAVE_HDF5_H)
+  CHECK_LIBRARY_EXISTS(hdf5 H5Dopen2 "" HDF5_LIB)
   if (HDF5_LIB)
     add_definitions (-DHAVE_HDF5_H)
   endif (HDF5_LIB)

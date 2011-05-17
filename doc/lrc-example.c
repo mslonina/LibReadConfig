@@ -51,6 +51,7 @@ int main(int argc, char* argv[]){
     {"logs", "epoch", "2003.0", LRC_FLOAT},
     {"farm", "xres", "222", LRC_INT},
     {"farm", "yres", "444", LRC_INT},
+    {"farm", "yres", "433", LRC_INT},
     LRC_OPTIONS_END
   };
 	
