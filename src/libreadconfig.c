@@ -367,9 +367,9 @@ int LRC_charCount(char* l, char* s){
  * @fn void newNamespace(char* cfg)
  * @brief Helper function for creating new namespaces
  */
-LRC_configNamespace* LRC_newNamespace(char* cfg){
+LRC_configNamespace* LRC_newNamespace(char* cfg) {
 
-  LRC_configNamespace* newNM;
+  LRC_configNamespace* newNM = NULL;
 
   newNM = malloc(sizeof(LRC_configNamespace));
   if (!newNM) {
@@ -382,6 +382,7 @@ LRC_configNamespace* LRC_newNamespace(char* cfg){
     perror("LRC_newNamespace: line 382 malloc failed.");
     return NULL;
   }
+
   strncpy(newNM->space, cfg, strlen(cfg));
   newNM->space[strlen(cfg)] = LRC_NULL;
   newNM->options = NULL;
@@ -414,7 +415,7 @@ LRC_configNamespace* LRC_newNamespace(char* cfg){
 /**
  *  Text parser
  *
- *  @fn int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configDefaults* ct)
+ *  @fn int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head)
  *  @brief Reads config file, namespaces, variable names and values,
  *  into the options structure @see LRC_configNamespace.
  *
@@ -427,11 +428,8 @@ LRC_configNamespace* LRC_newNamespace(char* cfg){
  *  @param COMM
  *    The comment mark.
  *
- *  @param ct
+ *  @param head
  *    Pointer to the structure with datatypes allowed in the config file.
- *
- *  @param numCT
- *    Number of datatypes allowed in the config file.
  *
  *  @return
  *    Number of namespaces found in the config file on success, -1 otherwise.
@@ -452,9 +450,14 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
 
   size_t valuelen = 0;
 
+  if (!head) {
+    perror("LRC_ASCIIParser: No config assigned");
+    return -1;
+  }
+
   current = head;
 
-  while(!feof(read)){
+  while (!feof(read)) {
     
     /* Count lines */
     j++; 
@@ -472,7 +475,7 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
     if (strspn(line, COMM) > 0) continue;
     
     /* Check for the separator at the beginning */
-    if (strspn(line, SEP) > 0){
+    if (strspn(line, SEP) > 0) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_VAR); 
       goto failure;
     }
@@ -482,8 +485,8 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
     b = LRC_trim(strtok(line,COMM));
 
     /* Check for namespaces */
-    if (b[0] == '['){
-      if(b[strlen(b)-1] != ']'){
+    if (b[0] == '[') {
+      if (b[strlen(b)-1] != ']') {
         LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_BRACKET); 
         goto failure;
       }
@@ -492,10 +495,10 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
 			
 			nextNM = LRC_findNamespace(b, head);
 			
-			if(nextNM == NULL){
+			if (nextNM == NULL) {
 				LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_NAMESPACE);
 				goto failure;
-			}else{
+			} else {
 				current = nextNM;
 			}
       
@@ -505,27 +508,27 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
     }
   
     /* If no namespace was specified return failure */
-    if (current == NULL){
+    if (current == NULL) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_NONAMESPACE);
       goto failure;
     }
 
     /* Check if in the var/value string the separator exist.*/
-    if(strstr(b,SEP) == NULL){
+    if (strstr(b,SEP) == NULL) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_SEP); 
       goto failure;
     }
     
     /* Check some special case:
      * we have separator, but no value */
-    if((strlen(b) - 1) == strcspn(b,SEP)){
+    if ((strlen(b) - 1) == strcspn(b,SEP)) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_MISSING_VAL); 
       goto failure;
     }
 
     /* We allow to have only one separator in line */
     sepc = LRC_charCount(b, SEP);
-    if(sepc > 1){
+    if (sepc > 1) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_TOOMANY_SEP); 
       goto failure;
     }
@@ -535,12 +538,12 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
 
 		newOP = LRC_findOption(c, current);
 		
-		if(newOP == NULL){
+		if (newOP == NULL) {
       LRC_message(j, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); 
       goto failure;
 		}
 
-    while (c!=NULL){
+    while (c!=NULL) {
       if (c[0] == '\n') break;
 
       valuelen = strlen(c);
@@ -572,7 +575,7 @@ int LRC_ASCIIParser(FILE* read, char* SEP, char* COMM, LRC_configNamespace* head
 			
 			c = LRC_trim(strtok(NULL,"\n"));
 
-			if(value) free(value);
+			if (value) free(value);
     }  
 		
   }
@@ -583,7 +586,7 @@ failure:
 }
 
 /**
- * @fn void LRC_cleanup()
+ * @fn void LRC_cleanup(LRC_configNamespace* head)
  * @brief Cleanup assign pointers. This is required for proper memory managment.
  */
 void LRC_cleanup(LRC_configNamespace* head){
@@ -595,39 +598,38 @@ void LRC_cleanup(LRC_configNamespace* head){
 
   current = head;
 
-  while(current) {
+  while (current) {
     nextNM = current->next;
     currentOP = current->options;
       
-    while(currentOP) {
+    while (currentOP) {
       nextOP = currentOP->next;
-      if(currentOP->value) free(currentOP->value);
-      if(currentOP->name) free(currentOP->name);
-      if(currentOP) free(currentOP);
+      if (currentOP->value) free(currentOP->value);
+      if (currentOP->name) free(currentOP->name);
+      if (currentOP) free(currentOP);
       currentOP = nextOP;
     }
 
-    if(current->space) free(current->space);
-    if(current) free(current);
+    if (current->space) free(current->space);
+    if (current) free(current);
     current=nextNM;
     
   }
 
   head = NULL;
-
 }
 
 #if HAVE_HDF5_H
 /**
  * HDF5 parser 
  * 
- * @fn int LRC_HDF5Parser(hid_t file, LRC_configDefaults* ct, int numCT)
+ * @fn int LRC_HDF5Parser(hid_t file, LRC_configNamespace *head)
  * @brief Parse config data stored in HDF5 files.
  *
  * @param file
  *   The handler of the file.
  *
- * @param ct
+ * @param head
  *   Pointer to the structure with default values.
  *
  * @return
@@ -649,12 +651,12 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
   ssize_t vlen;
   hsize_t edims[1], emaxdims[1];
 
-  LRC_configNamespace* nextNM;
+  LRC_configNamespace* nextNM = NULL;
   LRC_configOptions* newOP = NULL;
-  LRC_configNamespace* current;
+  LRC_configNamespace* current = NULL;
 
   char* tempaddr = NULL;
-  char* value;
+  char* value = NULL;
   ccd_t* rdata;
 
   /* For future me: how to open compound data type and read it,
@@ -663,11 +665,11 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
   /* Create variable length string datatype */
   name_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(name_dt, H5T_VARIABLE);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   value_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(value_dt, H5T_VARIABLE);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   /* Create compound datatype for the memory */
   ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
@@ -681,13 +683,13 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
 
   /* Get group info */
   status = H5Gget_info(group, &group_info);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   /* Get number of opts (dataspaces) */
   numOfNM = group_info.nlinks;
 
   /* Iterate each dataspace and assign config values */
-  for(i = 0; i < numOfNM; i++){
+  for (i = 0; i < numOfNM; i++) {
 
     /* Get name of dataspace -> the namespace */
     H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, 
@@ -705,29 +707,29 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
       goto failure;
     }
     status = H5Dread(dataset, ccm_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
-    if(status < 0) goto failure;
+    if (status < 0) goto failure;
     
     status = H5Sclose(dataspace);
-    if(status < 0) goto failure;
+    if (status < 0) goto failure;
     
     status = H5Dclose(dataset);
-    if(status < 0) goto failure;
+    if (status < 0) goto failure;
 
     /* Check if namespace exists */
     nextNM = LRC_findNamespace(link_name, head);
-    if(nextNM == NULL){
+    if (nextNM == NULL) {
 				LRC_message(i, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_NAMESPACE);
         goto failure;
-    }else{
+    } else {
         current = nextNM;
     }
 
     /* Assign values */
-    for(k = 0; k < (int)edims[0]; k++){
+    for (k = 0; k < (int)edims[0]; k++) {
       
       /* Find option and change the value */
       newOP = LRC_findOption(rdata[k].name, current);
-      if(newOP == NULL){
+      if (newOP == NULL) {
         LRC_message(i, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); 
         goto failure;
       }
@@ -761,10 +763,10 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
   }
 
   status = H5Tclose(ccm_tid);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Gclose(group);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
  
   return numOfNM;
 
@@ -778,39 +780,44 @@ failure:
  */
 
 /**
- * @fn void LRC_ASCIIWriter(FILE*, char* sep, char* comm)
+ * @fn void LRC_ASCIIWriter(FILE*, char* sep, char* comm, LRC_configNamespace* head)
  * @brief Write ASCII config file.
  * @return
  *  Should return 0 on success, errcode otherwise
  */
 int LRC_ASCIIWriter(FILE* write, char* sep, char* comm, LRC_configNamespace* head){
 
-  LRC_configOptions* currentOP;
-  LRC_configOptions* nextOP;
-  LRC_configNamespace* nextNM;
-  LRC_configNamespace* current;
+  LRC_configOptions* currentOP = NULL;
+  LRC_configOptions* nextOP = NULL;
+  LRC_configNamespace* nextNM = NULL;
+  LRC_configNamespace* current = NULL;
+
+  if (!head) {
+    perror("LRC_ASCIIWriter: no config assigned");
+    return -1;
+  }
 
   current = head;
 
   fprintf(write,"%s Written by LibReadConfig \n",comm);
 
-  do{
-    if(current){
+  do {
+    if (current) {
       fprintf(write, "[%s]\n",current->space);
       currentOP = current->options; 
-      do{
-        if(currentOP){
+      do {
+        if (currentOP) {
           fprintf(write, "%s %s %s\n", currentOP->name, sep, currentOP->value);
           nextOP = currentOP->next;
           currentOP = nextOP;
         }
-      }while(currentOP);
+      } while(currentOP);
       
       nextNM = current->next;
       current = nextNM;
     }
     fprintf(write,"\n");
-  }while(current);
+  } while(current);
 
   fprintf(write,"\n");
   return 0;
@@ -818,7 +825,7 @@ int LRC_ASCIIWriter(FILE* write, char* sep, char* comm, LRC_configNamespace* hea
 
 #if HAVE_HDF5_H
 /**
- * @fn void LRC_HDF5writer(hid_t file)
+ * @fn void LRC_HDF5writer(hid_t file, LRC_configNamespace* head)
  * @brief Write config values to hdf file.
  * 
  * @param file
@@ -837,10 +844,10 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
   int k = 0;
   size_t nlen, vlen;
 
-  LRC_configOptions* currentOP;
-  LRC_configOptions* nextOP;
-  LRC_configNamespace* nextNM;
-  LRC_configNamespace* current;
+  LRC_configOptions* currentOP = NULL;
+  LRC_configOptions* nextOP = NULL;
+  LRC_configNamespace* nextNM = NULL;
+  LRC_configNamespace* current = NULL;
 
   ccd_t* ccd;
   ccd = malloc(sizeof(ccd_t));
@@ -851,16 +858,21 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
 
   group = H5Gcreate(file, LRC_CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+  if (!head) {
+    perror("LRC_HDFWriter: no config assigned");
+    goto failure;
+  }
+
   current = head;
 
   /* Create variable length string datatype */
   name_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(name_dt, H5T_VARIABLE);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   value_dt = H5Tcopy(H5T_C_S1);
   status = H5Tset_size(value_dt, H5T_VARIABLE);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   /* Create compound datatype for the memory */
   ccm_tid = H5Tcreate(H5T_COMPOUND, sizeof(ccd_t));
@@ -873,20 +885,20 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
   ccf_tid = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t) + sizeof(hvl_t));
 
   status = H5Tinsert(ccf_tid, "Name", 0, name_dt);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tinsert(ccf_tid, "Value", sizeof(hvl_t), value_dt);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tinsert(ccf_tid, "Type", sizeof(hvl_t) + sizeof(hvl_t),H5T_NATIVE_INT);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   /* Commit datatype */
   status = H5Tcommit(file, LRC_HDF5_DATATYPE, ccf_tid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
       
-  do{
-   if(current){ 
+  do {
+    if (current) { 
 
       currentOP = current->options;
       dims[0] = (hsize_t)LRC_countOptions(current->space, current);
@@ -898,8 +910,8 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
 
     /* Write config data one by one in given namespace */
     k = 0;
-    do{
-      if(currentOP){ 
+    do {
+      if (currentOP) { 
 
       /* Assign values */
       nlen = strlen(currentOP->name);
@@ -937,13 +949,13 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
 
       memspace = H5Screate_simple(1, dimsm, NULL);
       status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, stride, count, NULL);
-      if(status < 0) goto failure;
+      if (status < 0) goto failure;
 
       status = H5Dwrite(dataset, ccm_tid, memspace, dataspace, H5P_DEFAULT, ccd);
-      if(status < 0) goto failure;
+      if (status < 0) goto failure;
       
       status = H5Sclose(memspace);
-      if(status < 0) goto failure;
+      if (status < 0) goto failure;
 
       free(ccd->name);
       free(ccd->value);
@@ -952,33 +964,33 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
       k++;
 
       }
-    }while(currentOP);
+    } while(currentOP);
 
     status = H5Dclose(dataset);
-    if(status < 0) goto failure;
+    if (status < 0) goto failure;
     
     status = H5Sclose(dataspace);
-    if(status < 0) goto failure;
+    if (status < 0) goto failure;
 
     nextNM = current->next;
     current = nextNM;
-   }
-  }while(current);
+    }
+  } while(current);
 
   status = H5Gclose(group);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tclose(name_dt);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tclose(value_dt);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tclose(ccf_tid);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
   
   status = H5Tclose(ccm_tid);
-  if(status < 0) goto failure;
+  if (status < 0) goto failure;
 
   free(ccd);
 
@@ -989,41 +1001,41 @@ failure:
 #endif
 
 /**
- * @fn void LRC_printAll()
+ * @fn void LRC_printAll(LRC_configNamespace* head)
  * @brief Prints all options.
  */
 void LRC_printAll(LRC_configNamespace* head){
 
-  LRC_configOptions* currentOP;
-  LRC_configOptions* nextOP;
-  LRC_configNamespace* nextNM;
-  LRC_configNamespace* current;
+  LRC_configOptions* currentOP = NULL;
+  LRC_configOptions* nextOP = NULL;
+  LRC_configNamespace* nextNM = NULL;
+  LRC_configNamespace* current = NULL;
 
   current = head;
 
-  do{
-    if(current != NULL){
+  do {
+    if (current) {
       nextNM = current->next;
       printf("[%s][%d]\n",current->space, LRC_countOptions(current->space, current));
       currentOP = current->options;
       do {
-        if(currentOP != NULL){
+        if (currentOP) {
           nextOP = currentOP->next;
           printf("%s = %s [type %d]\n", currentOP->name, currentOP->value, currentOP->type);
           currentOP = nextOP;
         }
-      }while(currentOP != NULL);
+      } while(currentOP);
       
       current=nextNM;
     }
 		printf("\n");
     
-  }while(current != NULL);
+  } while(current);
 
 }
 
 /**
- * @fn int LRC_assignDefaults()
+ * @fn int LRC_assignDefaults(LRC_configDefaults* cd)
  * @brief Assign default values
  *
  * @return
@@ -1047,7 +1059,7 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
   head = NULL;
   current = NULL;
   
-  while(cd[i].space != NULL){
+  while (cd[i].space) {
 
       /* Prepare namespace */
       slen = strlen(cd[i].space);
@@ -1065,34 +1077,34 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
       } else {
         nextNM = LRC_findNamespace(space, head);
 
-        if(nextNM == NULL){
+        if (nextNM == NULL) {
           current = LRC_lastLeaf(head);
           current->next = LRC_newNamespace(space);
           current = current->next;
-        }else{
+        } else {
 				  current = nextNM;
 			  }
       }
 
       free(space);
       
-      if(current != NULL){ 
+      if (current) { 
 
 				currentOP = LRC_findOption(cd[i].name, current);
 
-        if(currentOP == NULL){  	
+        if (currentOP == NULL) {  	
 					newOP = malloc(sizeof(LRC_configOptions));
           if (!newOP) {
             perror("LRC_assignDefaults: line 1075 malloc failed");
             return NULL;
           }
 				
-				  if(current->options == NULL){
+				  if (current->options == NULL) {
          	  current->options = newOP;
 					  currentOP = current->options;
-				  }else{
+				  } else {
 					  currentOP = current->options;
-					  while(currentOP->next != NULL){
+					  while (currentOP->next) {
 						  currentOP = currentOP->next;
 					  }
 					  currentOP->next = newOP;
@@ -1161,40 +1173,43 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
  */
 LRC_configNamespace* LRC_findNamespace(char* namespace, LRC_configNamespace* head){
   
-  LRC_configNamespace* result_nm;
-  LRC_configNamespace* test;
+  LRC_configNamespace* result_nm = NULL;
+  LRC_configNamespace* test = NULL;
   
-  result_nm = NULL;
-  test = head;
+  if (head && namespace) {
+    test = head;
 
-  while(test != NULL){
-    if(strcmp(test->space, namespace) == 0){
-      result_nm = test;
-      break;
+    while (test) {
+      if(strcmp(test->space, namespace) == 0){
+        result_nm = test;
+        break;
+      }
+      test = test->next;
     }
-    test = test->next;
   }
   return result_nm;
 }
 
 LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head) {
 
-  LRC_configNamespace* test;
+  LRC_configNamespace* test = NULL;
 
-  test = head;
+  if (head) {
+    test = head;
 
-  if (test->next == NULL) return test;
-
-  while(test->next != NULL) {
-    test = test->next;
     if (test->next == NULL) return test;
+
+    while (test->next) {
+      test = test->next;
+      if (test->next == NULL) return test;
+    }
   }
 
   return head;
 }
 
 /**
- * @fn LRC_configOptions* LRC_findOption(char* varname)
+ * @fn LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current)
  * @brief Search for given variable
  *
  * @param varname
@@ -1206,27 +1221,30 @@ LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head) {
  */
 LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
 
-  LRC_configOptions* testOP;
-  LRC_configOptions* ret;
+  LRC_configOptions* testOP = NULL;
+  LRC_configOptions* ret = NULL;
 
-  testOP = current->options;
-	ret = NULL;
+  if (current) {
+    if (current->options) {
+      testOP = current->options;
 
-  while(testOP != NULL){
-    if(testOP->name != NULL){
-      if(strcmp(testOP->name, varname) == 0){
-        ret = testOP;
-        break;
+      while(testOP){
+        if(testOP->name){
+          if(strcmp(testOP->name, varname) == 0){
+            ret = testOP;
+            break;
+          }
+        }
+        testOP = testOP->next;
       }
     }
-    testOP = testOP->next;
   }
 
   return ret;
 }
 
 /**
- * @fn LRC_configOptions* LRC_modifyOption(char* varname, char* newvalue, int newtype)
+ * @fn LRC_configOptions* LRC_modifyOption(char* varname, char* newvalue, int newtype, LRC_configNamespace* head)
  * @brief Modifies value and type of given option.
  *
  * @return
@@ -1235,42 +1253,45 @@ LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
 LRC_configOptions* LRC_modifyOption(char* namespace, char* varname, char* newvalue, int newtype, LRC_configNamespace* head){
 	
 	LRC_configOptions* option = NULL;
-  LRC_configNamespace* current;
+  LRC_configNamespace* current = NULL;
 	char* tempaddr = NULL;
 	size_t vlen;
 
-	current = LRC_findNamespace(namespace, head);
-	option = LRC_findOption(varname, current);
+  if (head) {
+	  current = LRC_findNamespace(namespace, head);
+	  if (current) {
+      option = LRC_findOption(varname, current);
 
-	vlen = strlen(newvalue);
+	    vlen = strlen(newvalue);
 
-	if(option != NULL){
-		if(option->value != NULL){
-      if(strcmp(option->value, newvalue) != 0){
-			  tempaddr = realloc(option->value, vlen + sizeof(char*));
-          if (!tempaddr) {
-            perror("LRC_modifyOption: line 1253 malloc failed");
+      if(option){
+        if(option->value){
+          if(strcmp(option->value, newvalue) != 0){
+            tempaddr = realloc(option->value, vlen + sizeof(char*));
+              if (!tempaddr) {
+                perror("LRC_modifyOption: line 1253 malloc failed");
+                return NULL;
+              }
+            option->value = tempaddr;
+          }
+        }else{
+          option->value = malloc(vlen + sizeof(char*));
+          if (!option->value) {
+            perror("LRC_modifyOption: line 1261 malloc failed");
             return NULL;
           }
-			  option->value = tempaddr;
-      }
-		}else{
-			option->value = malloc(vlen + sizeof(char*));
-      if (!option->value) {
-        perror("LRC_modifyOption: line 1261 malloc failed");
-        return NULL;
-      }
-		}
-    if(strcmp(option->value, newvalue) != 0){
-		  strncpy(option->value, newvalue, vlen);
-		  option->value[vlen] = LRC_NULL;
-    }
+        }
+        if(strcmp(option->value, newvalue) != 0){
+          strncpy(option->value, newvalue, vlen);
+          option->value[vlen] = LRC_NULL;
+        }
 
-    if(option->type != newtype){
-		  option->type = newtype;
+        if(option->type != newtype){
+          option->type = newtype;
+        }
+      }
     }
-	}
-
+  }
 	return option;
 }
 
@@ -1279,14 +1300,18 @@ char* LRC_getOptionValue(char* namespace, char* var, LRC_configNamespace* head){
 	LRC_configOptions* option = NULL;
   LRC_configNamespace* current = NULL;
 
-  current = LRC_findNamespace(namespace, head);
-  option = LRC_findOption(var, current);
-
-  return option->value;
+  if (head) {
+    current = LRC_findNamespace(namespace, head);
+    if (current) {
+      option = LRC_findOption(var, current);
+      if (option && option->value) return option->value;
+    }
+  }
+  return NULL;
 }
 
 /**
- * @fn LRC_option2int(char* namespace, char* varname)
+ * @fn LRC_option2int(char* namespace, char* varname, LRC_configNamespace* head)
  * @brief Converts the option to integer
  *
  * @return
@@ -1295,23 +1320,27 @@ char* LRC_getOptionValue(char* namespace, char* var, LRC_configNamespace* head){
 int LRC_option2int(char* namespace, char* varname, LRC_configNamespace* head){
   
   LRC_configOptions* option = NULL;
-  LRC_configNamespace* current;
-  int value;
+  LRC_configNamespace* current = NULL;
+  int value = 0;
   
-  current = LRC_findNamespace(namespace, head);
-  option = LRC_findOption(varname, current);
+  if (head && namespace) {
+    current = LRC_findNamespace(namespace, head);
+    if (current && varname) {
+      option = LRC_findOption(varname, current);
 
-  if(option != NULL){
-   if(option->value != NULL){
-    value = atoi(option->value);
-   }
+      if (option) {
+        if (option->value) {
+          value = atoi(option->value);
+        }
+      }
+    }
   }
 
   return value;
 }
 
 /**
- * @fn LRC_option2float(char* namespace, char* varname)
+ * @fn LRC_option2float(char* namespace, char* varname, LRC_configNamespace* head)
  * @brief Converts the option to float
  *
  * @return
@@ -1320,24 +1349,28 @@ int LRC_option2int(char* namespace, char* varname, LRC_configNamespace* head){
 float LRC_option2float(char* namespace, char* varname, LRC_configNamespace* head){
   
   LRC_configOptions* option = NULL;
-  LRC_configNamespace* current;
-  float value;
-  char* p;
+  LRC_configNamespace* current = NULL;
+  float value = 0.0;
+  char* p = NULL;
   
-  current = LRC_findNamespace(namespace, head);
-  option = LRC_findOption(varname, current);
+  if (head && namespace) {
+    current = LRC_findNamespace(namespace, head);
+    if (current && varname) {
+      option = LRC_findOption(varname, current);
 
-  if(option != NULL){
-   if(option->value != NULL){
-    value = strtof(option->value, &p);
-   }
+      if (option) {
+        if (option->value) {
+          value = strtof(option->value, &p);
+        }
+      }
+    }
   }
   
   return value;
 }
 
 /**
- * @fn LRC_option2double(char* namespace, char* varname)
+ * @fn LRC_option2double(char* namespace, char* varname, LRC_configNamespace* head)
  * @brief Converts the option to double
  *
  * @return
@@ -1346,24 +1379,28 @@ float LRC_option2float(char* namespace, char* varname, LRC_configNamespace* head
 double LRC_option2double(char* namespace, char* varname, LRC_configNamespace* head){
   
   LRC_configOptions* option = NULL;
-  LRC_configNamespace* current;
-  double value;
-  char* p;
+  LRC_configNamespace* current = NULL;
+  double value = 0.0;
+  char* p = NULL;
   
-  current = LRC_findNamespace(namespace, head);
-  option = LRC_findOption(varname, current);
+  if (head && namespace) {
+    current = LRC_findNamespace(namespace, head);
+    if (current && varname) {
+      option = LRC_findOption(varname, current);
 
-  if(option != NULL){
-   if(option->value != NULL){
-    value = strtod(option->value, &p);
-   }
+      if (option) {
+        if (option->value) {
+          value = strtod(option->value, &p);
+        }
+      }
+    }
   }
   
   return value;
 }
 
 /**
- * @fn LRC_option2Ldouble(char* namespace, char* varname)
+ * @fn LRC_option2Ldouble(char* namespace, char* varname, LRC_configNamespace* head)
  * @brief Converts the option to long double
  *
  * @return
@@ -1372,24 +1409,28 @@ double LRC_option2double(char* namespace, char* varname, LRC_configNamespace* he
 long double LRC_option2Ldouble(char* namespace, char* varname, LRC_configNamespace* head){
   
   LRC_configOptions* option = NULL;
-  LRC_configNamespace* current;
-  long double value;
-  char* p;
+  LRC_configNamespace* current = NULL;
+  long double value = 0.0;
+  char* p = NULL;
   
-  current = LRC_findNamespace(namespace, head);
-  option = LRC_findOption(varname, current);
-
-  if(option != NULL){
-   if(option->value != NULL){
-    value = strtold(option->value, &p);
-   }
+  if (head && namespace) {
+    current = LRC_findNamespace(namespace, head);
+    if (current && varname) {
+      option = LRC_findOption(varname, current);
+    
+      if (option) {
+        if (option->value) {
+          value = strtold(option->value, &p);
+        }
+      }
+    }
   }
 
   return value;
 }
 
 /**
- * @fn LRC_countOptions(char* nm)
+ * @fn LRC_countOptions(char* nm, LRC_configNamespace* head)
  * @brief Counts number of options in given namespace
  *
  * @return
@@ -1401,15 +1442,16 @@ int LRC_countOptions(char* nm, LRC_configNamespace* head){
   LRC_configOptions* option;
   int opts = 0;
 
-  nspace = LRC_findNamespace(nm, head);
+  if (head && nm) {
+    nspace = LRC_findNamespace(nm, head);
 
-  if(nspace != NULL){
-    option = nspace->options;
-    while(option != NULL){
-      opts++;
-      option = option->next;
+    if (nspace) {
+      option = nspace->options;
+      while (option) {
+        opts++;
+        option = option->next;
+      }
     }
-
   }
 
   return opts;
