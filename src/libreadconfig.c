@@ -1058,7 +1058,7 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 
   head = NULL;
   current = NULL;
-  
+
   while (cd[i].space) {
 
       /* Prepare namespace */
@@ -1083,6 +1083,7 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
           current = current->next;
         } else {
 				  current = nextNM;
+          current->next = NULL;
 			  }
       }
 
@@ -1098,9 +1099,14 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
             perror("LRC_assignDefaults: line 1075 malloc failed");
             return NULL;
           }
+          newOP->name = NULL;
+          newOP->value = NULL;
+          newOP->type = LRC_INT;
+          newOP->next = NULL;
 				
 				  if (current->options == NULL) {
          	  current->options = newOP;
+            current->options->next = NULL;
 					  currentOP = current->options;
 				  } else {
 					  currentOP = current->options;
