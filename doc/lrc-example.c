@@ -67,6 +67,9 @@ int main(int argc, char* argv[]){
    */
 	LRC_printAll(head);
 
+  opts = LRC_allOptions(head);
+  printf("opts = %d\n", opts);
+
 	/* Parse ASCII config file. 
    * Will override defaults and ignore any option not included in defaults
    * */

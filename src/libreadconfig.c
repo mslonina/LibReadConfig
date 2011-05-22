@@ -639,9 +639,9 @@ void LRC_cleanup(LRC_configNamespace* head){
  *   - Open, rather than recreate compound datatype.
  *
  */
-int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
+int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
   
-  hid_t group, dataset, dataspace;
+  hid_t master_group, group, dataset, dataspace;
   hid_t ccm_tid, name_dt, value_dt;
   herr_t status;
   H5G_info_t group_info;
@@ -679,7 +679,8 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
   H5Tinsert(ccm_tid, "Type", HOFFSET(ccd_t, type), H5T_NATIVE_INT);
 
   /* Open config group */
-  group = H5Gopen(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
+  master_group = H5Gopen(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
+  group = H5Gopen(master_group, group_name, H5P_DEFAULT);
 
   /* Get group info */
   status = H5Gget_info(group, &group_info);
@@ -767,6 +768,9 @@ int LRC_HDF5Parser(hid_t file, LRC_configNamespace* head){
   
   status = H5Gclose(group);
   if (status < 0) goto failure;
+  
+  status = H5Gclose(master_group);
+  if (status < 0) goto failure;
  
   return numOfNM;
 
@@ -835,12 +839,13 @@ int LRC_ASCIIWriter(FILE* write, char* sep, char* comm, LRC_configNamespace* hea
  *  Should return 0 on success, errcode otherwise
  *
  */
-int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
+int LRC_HDF5Writer(hid_t file, char* group_name, LRC_configNamespace* head){
 
-  hid_t group, dataset, dataspace, memspace;
+  hid_t master_group, group, dataset, dataspace, memspace;
   hid_t ccm_tid, ccf_tid, name_dt, value_dt;
   hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
   herr_t status;
+  htri_t cctt;
   int k = 0;
   size_t nlen, vlen;
 
@@ -856,7 +861,13 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
     goto failure;
   }
 
-  group = H5Gcreate(file, LRC_CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  cctt = H5Lexists(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
+  if (!cctt) {
+    master_group = H5Gcreate(file, LRC_CONFIG_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+  } else {
+    master_group = H5Gopen(file, LRC_CONFIG_GROUP, H5P_DEFAULT);
+  }
+  group = H5Gcreate(master_group, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
   if (!head) {
     perror("LRC_HDFWriter: no config assigned");
@@ -894,9 +905,12 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
   if (status < 0) goto failure;
 
   /* Commit datatype */
-  status = H5Tcommit(file, LRC_HDF5_DATATYPE, ccf_tid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  if (status < 0) goto failure;
-      
+  cctt = H5Lexists(file, LRC_HDF5_DATATYPE, H5P_DEFAULT);
+  if (!cctt) {
+    status = H5Tcommit(file, LRC_HDF5_DATATYPE, ccf_tid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (status < 0) goto failure;
+  }
+
   do {
     if (current) { 
 
@@ -980,6 +994,9 @@ int LRC_HDF5Writer(hid_t file, LRC_configNamespace* head){
   status = H5Gclose(group);
   if (status < 0) goto failure;
   
+  status = H5Gclose(master_group);
+  if (status < 0) goto failure;
+  
   status = H5Tclose(name_dt);
   if (status < 0) goto failure;
   
@@ -1011,7 +1028,7 @@ void LRC_printAll(LRC_configNamespace* head){
   LRC_configNamespace* nextNM = NULL;
   LRC_configNamespace* current = NULL;
 
-  current = head;
+  if (head) current = head;
 
   do {
     if (current) {
@@ -1165,6 +1182,44 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
   }
 
   return head;
+}
+
+/**
+ * @fn int LRC_allOptions(LRC_configNamespace* head)
+ * @brief Count all available options
+ *
+ * @param head
+ * First namespace in the options list
+ *
+ * @return
+ * Number of options (all available namespaces)
+ */
+int LRC_allOptions(LRC_configNamespace* head) {
+  int allopts = 0;
+  LRC_configOptions* currentOP = NULL;
+  LRC_configOptions* nextOP = NULL;
+  LRC_configNamespace* nextNM = NULL;
+  LRC_configNamespace* current = NULL;
+
+  if (head) current = head;
+
+  do {
+    if (current) {
+      nextNM = current->next;
+      currentOP = current->options;
+      do {
+        if (currentOP) {
+          allopts++;
+          nextOP = currentOP->next;
+          currentOP = nextOP;
+        }
+      } while(currentOP);
+      current=nextNM;
+    }
+  } while(current);
+
+
+  return allopts;
 }
 
 /**

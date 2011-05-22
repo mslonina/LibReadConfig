@@ -45,7 +45,7 @@
 #define LRC_CONFIG_GROUP "config"
 #define LRC_HDF5_DATATYPE "LRC_Config"
 
-int LRC_HDF5Parser(hid_t, LRC_configNamespace* head);
-int LRC_HDF5Writer(hid_t, LRC_configNamespace* head);
+int LRC_HDF5Parser(hid_t, char* group_name, LRC_configNamespace* head);
+int LRC_HDF5Writer(hid_t, char* group_name, LRC_configNamespace* head);
 
 #endif

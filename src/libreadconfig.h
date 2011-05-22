@@ -62,6 +62,7 @@
  * @brief Null character for trimming.
  */
 #define LRC_MAX_LINE_LENGTH 1024
+#define LRC_CONFIG_LEN 512
 #define LRC_OPTIONS_END {NULL, NULL, NULL, 0}
 #define LRC_NULL '\0'
 
@@ -204,6 +205,7 @@ int LRC_ASCIIWriter(FILE* file, char* sep, char* comm, LRC_configNamespace* head
 LRC_configNamespace* LRC_findNamespace(char* space, LRC_configNamespace* head);
 LRC_configOptions* LRC_findOption(char* var, LRC_configNamespace* current);
 LRC_configOptions* LRC_modifyOption(char* space, char* var, char* value, int type, LRC_configNamespace* head);
+int LRC_allOptions(LRC_configNamespace* head);
 int LRC_countOptions(char* space, LRC_configNamespace* head);
 char* LRC_getOptionValue(char* space, char* var, LRC_configNamespace* current);
 
