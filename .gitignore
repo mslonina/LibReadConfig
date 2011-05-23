@@ -31,3 +31,4 @@ autom4te.cache
 .cmake
 CMake*
 !CMakeLists.txt
+*.h5

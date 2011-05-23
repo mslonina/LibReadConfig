@@ -377,7 +377,7 @@ LRC_configNamespace* LRC_newNamespace(char* cfg) {
     return NULL;
   }
 
-  newNM->space = malloc(strlen(cfg+sizeof(char*)));
+  newNM->space = malloc(strlen(cfg)+sizeof(char*));
   if (!newNM->space) {
     perror("LRC_newNamespace: line 382 malloc failed.");
     return NULL;
@@ -648,16 +648,16 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
 
   int numOfNM = 0, i = 0, k = 0;
   char link_name[LRC_MAX_LINE_LENGTH];
-  ssize_t vlen;
+  ssize_t vlen, lname;
+  char* tname;
   hsize_t edims[1], emaxdims[1];
 
   LRC_configNamespace* nextNM = NULL;
   LRC_configOptions* newOP = NULL;
   LRC_configNamespace* current = NULL;
 
-  char* tempaddr = NULL;
   char* value = NULL;
-  ccd_t* rdata;
+  ccd_t* rdata = NULL;
 
   /* For future me: how to open compound data type and read it,
    * without rebuilding memtype? Is this possible? */
@@ -694,7 +694,7 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
 
     /* Get name of dataspace -> the namespace */
     H5Lget_name_by_idx(group, ".", H5_INDEX_NAME, H5_ITER_INC, i, 
-        link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
+      link_name, LRC_MAX_LINE_LENGTH, H5P_DEFAULT);
 
     /* Get size of the table with config data */
     dataset = H5Dopen(group, link_name, H5P_DEFAULT);
@@ -702,18 +702,13 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
     H5Sget_simple_extent_dims(dataspace, edims, emaxdims);
     
     /* We will get all data first */
-    rdata = malloc((int)edims[0]*sizeof(ccd_t));
+    rdata = (ccd_t*) malloc(((int)edims[0])*sizeof(ccd_t));
     if (!rdata) {
       perror("LRC_HDFParser: line 698 malloc failed");
       goto failure;
     }
+    
     status = H5Dread(dataset, ccm_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
-    if (status < 0) goto failure;
-    
-    status = H5Sclose(dataspace);
-    if (status < 0) goto failure;
-    
-    status = H5Dclose(dataset);
     if (status < 0) goto failure;
 
     /* Check if namespace exists */
@@ -729,7 +724,14 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
     for (k = 0; k < (int)edims[0]; k++) {
       
       /* Find option and change the value */
-      newOP = LRC_findOption(rdata[k].name, current);
+      lname = strlen(rdata[k].name);
+      tname = malloc(lname + sizeof(char*));
+      strncpy(tname, rdata[k].name, lname);
+      tname[lname] = LRC_NULL;
+      
+      newOP = LRC_findOption(tname, current);
+      free(tname);
+
       if (newOP == NULL) {
         LRC_message(i, LRC_ERR_CONFIG_SYNTAX, LRC_MSG_UNKNOWN_VAR); 
         goto failure;
@@ -744,12 +746,11 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
       strncpy(value, rdata[k].value, vlen);
       value[vlen] = LRC_NULL;
 
-      tempaddr = realloc(newOP->value, vlen + sizeof(char*));
-      if (!tempaddr) {
+      newOP->value = realloc(newOP->value, vlen + sizeof(char*));
+      if (!newOP->value) {
         perror("LRC_HDFParser: line 741 malloc failed");
         goto failure;
       }
-      newOP->value = tempaddr;
 
       strncpy(newOP->value, value, vlen);
       newOP->value[vlen] = LRC_NULL;
@@ -760,12 +761,27 @@ int LRC_HDF5Parser(hid_t file, char* group_name, LRC_configNamespace* head){
       
     }
 
+    status = H5Dvlen_reclaim(ccm_tid, dataspace, H5P_DEFAULT, rdata);
+    if (status < 0) goto failure;
+    
+    status = H5Sclose(dataspace);
+    if (status < 0) goto failure;
+    
+    status = H5Dclose(dataset);
+    if (status < 0) goto failure;
+
     free(rdata);
   }
 
   status = H5Tclose(ccm_tid);
   if (status < 0) goto failure;
   
+  status = H5Tclose(name_dt);
+  if (status < 0) goto failure;
+  
+  status = H5Tclose(value_dt);
+  if (status < 0) goto failure;
+
   status = H5Gclose(group);
   if (status < 0) goto failure;
   
@@ -893,7 +909,7 @@ int LRC_HDF5Writer(hid_t file, char* group_name, LRC_configNamespace* head){
   H5Tinsert(ccm_tid, "Type", HOFFSET(ccd_t, type), H5T_NATIVE_INT);
 
   /* Create compound datatype for the file */
-  ccf_tid = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t) + sizeof(hvl_t));
+  ccf_tid = H5Tcreate(H5T_COMPOUND, 8 + 2*sizeof(hvl_t));
 
   status = H5Tinsert(ccf_tid, "Name", 0, name_dt);
   if (status < 0) goto failure;
@@ -901,7 +917,7 @@ int LRC_HDF5Writer(hid_t file, char* group_name, LRC_configNamespace* head){
   status = H5Tinsert(ccf_tid, "Value", sizeof(hvl_t), value_dt);
   if (status < 0) goto failure;
   
-  status = H5Tinsert(ccf_tid, "Type", sizeof(hvl_t) + sizeof(hvl_t),H5T_NATIVE_INT);
+  status = H5Tinsert(ccf_tid, "Type", 2*sizeof(hvl_t),H5T_NATIVE_INT);
   if (status < 0) goto failure;
 
   /* Commit datatype */
@@ -1048,6 +1064,8 @@ void LRC_printAll(LRC_configNamespace* head){
 		printf("\n");
     
   } while(current);
+
+  current = NULL;
 
 }
 
@@ -1281,19 +1299,36 @@ LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head) {
 LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
 
   LRC_configOptions* testOP = NULL;
+  size_t vlen, olen;
+  char* var;
+  char* opt;
 
   if (current && varname) {
     if (current->options) {
       testOP = current->options;
+      vlen = strlen(varname);
+      var = malloc(vlen + 2*sizeof(char*));
+      strncpy(var, varname, vlen);
+      var[vlen] = LRC_NULL;
 
       while (testOP) {
         if (testOP->name) {
-          if (strcmp(testOP->name, varname) == 0) {
+
+          olen = strlen(testOP->name);
+          opt = malloc(olen + sizeof(char*));
+          strncpy(opt, testOP->name, olen);
+          opt[olen] = LRC_NULL;
+          
+          if (strcmp(opt, var) == 0) {
+            free(opt); free(var);
             return testOP;
           }
+
+          free(opt);
         }
         testOP = testOP->next;
       }
+      free(var);
     }
   }
 
@@ -1321,9 +1356,9 @@ LRC_configOptions* LRC_modifyOption(char* namespace, char* varname, char* newval
 
 	    vlen = strlen(newvalue);
 
-      if(option){
-        if(option->value){
-          if(strcmp(option->value, newvalue) != 0){
+      if (option) {
+        if (option->value) {
+          if (strcmp(option->value, newvalue) != 0) {
             tempaddr = realloc(option->value, vlen + sizeof(char*));
               if (!tempaddr) {
                 perror("LRC_modifyOption: line 1253 malloc failed");
@@ -1331,19 +1366,19 @@ LRC_configOptions* LRC_modifyOption(char* namespace, char* varname, char* newval
               }
             option->value = tempaddr;
           }
-        }else{
+        } else {
           option->value = malloc(vlen + sizeof(char*));
           if (!option->value) {
             perror("LRC_modifyOption: line 1261 malloc failed");
             return NULL;
           }
         }
-        if(strcmp(option->value, newvalue) != 0){
+        if (strcmp(option->value, newvalue) != 0) {
           strncpy(option->value, newvalue, vlen);
           option->value[vlen] = LRC_NULL;
         }
 
-        if(option->type != newtype){
+        if (option->type != newtype) {
           option->type = newtype;
         }
       }

@@ -32,7 +32,7 @@ CONFIGURE_FILE (
   ${CMAKE_CURRENT_BINARY_DIR}/src/config.h
 )
 
-add_definitions (-Wall -std=c99 -DHAVE_CONFIG_H)
+add_definitions (-Wall -std=c99 -g -DHAVE_CONFIG_H)
 
 if (BUILD_HDF5)
   CHECK_INCLUDE_FILES (hdf5.h HAVE_HDF5_H)

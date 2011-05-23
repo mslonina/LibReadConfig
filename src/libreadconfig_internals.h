@@ -71,15 +71,5 @@ typedef struct{
 } ccd_t;
 #endif
 
-/**
- * @var LRC_configNamespace* head
- *  @brief Linked list head element
- *
- * @var LRC_configNamespace* current
- *  @brief Linked list current element
- */
-//LRC_configNamespace* head;
-//LRC_configNamespace* current;
-
 #endif
 

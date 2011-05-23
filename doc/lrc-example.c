@@ -67,50 +67,49 @@ int main(int argc, char* argv[]){
    */
 	LRC_printAll(head);
 
+
   opts = LRC_allOptions(head);
   printf("opts = %d\n", opts);
 
 	/* Parse ASCII config file. 
    * Will override defaults and ignore any option not included in defaults
    * */
-  printf("B-A\n");
 	inif = fopen("lrc-config","ro");
   if(inif != NULL){
 	  nms = LRC_ASCIIParser(inif, sep, comm, head);
-  printf("B-B\n");
   }else{
     perror("Error opening file: ");
     exit(-1);
   }
 	fclose(inif);
-  printf("B-C\n");
+
 
   /* LRC_modifyOption
    * This will modify the value and type of given option
    */
 	LRC_modifyOption("logs", "dump","234", LRC_INT, head);
-  printf("B-D\n");
 
 	/* Write new config file */
 	inif = fopen("lrc-ascii", "w");
   if(inif != NULL){
 	  LRC_ASCIIWriter(inif, sep, comm, head);
-  printf("B-E\n");
   }else{
     perror("Error opening file for write: ");
     exit(-1);
   }
 	fclose(inif);
 
+
 #if HAVE_HDF5_H
 	/* Write HDF5 file */
   fileid = H5Fcreate("lrc-hdf-test.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  LRC_HDF5Writer(fileid, head);
+  LRC_HDF5Writer(fileid, "myconfig", head);
   H5Fclose(fileid);
+  
   
   /* Reopen and read HDF5 config */
   fileid = H5Fopen("lrc-hdf-test.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
-  nms = LRC_HDF5Parser(fileid, head);
+  nms = LRC_HDF5Parser(fileid, "myconfig", head);
 
   printf("\nHDF5 config:\n\n");
   LRC_printAll(head);
