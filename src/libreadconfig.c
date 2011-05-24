@@ -1083,6 +1083,7 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
   LRC_configNamespace* current = NULL;
   LRC_configNamespace* head = NULL;
   LRC_configOptions* newOP = NULL;
+  LRC_configOptions* nextOP = NULL;
   LRC_configOptions* currentOP = NULL;
   size_t slen, nlen, vlen;
   char* space = NULL; 
@@ -1098,7 +1099,7 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 
       /* Prepare namespace */
       slen = strlen(cd[i].space);
-      space = malloc(slen+sizeof(char*));
+      space = calloc(slen+sizeof(char*), sizeof(char*));
       if (!space) {
         perror("LRC_assignDefaults: line 1047 malloc failed");
         return NULL;
@@ -1126,7 +1127,17 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
       
       if (current) { 
 
-				currentOP = LRC_findOption(cd[i].name, current);
+				/* Prepare var name*/
+       	nlen = strlen(cd[i].name);
+       	name = calloc(nlen+sizeof(char*), sizeof(char*));
+        if (!name) {
+          perror("LRC_assignDefaults: line 1095 malloc failed");
+          return NULL;
+        }
+       	strncpy(name, cd[i].name, nlen);
+				name[nlen] = LRC_NULL;
+
+				currentOP = LRC_findOption(name, current);
 
         if (currentOP == NULL) {  	
 					newOP = malloc(sizeof(LRC_configOptions));
@@ -1145,54 +1156,48 @@ LRC_configNamespace* LRC_assignDefaults(LRC_configDefaults* cd){
 					  currentOP = current->options;
 				  } else {
 					  currentOP = current->options;
-					  while (currentOP->next) {
-						  currentOP = currentOP->next;
+            nextOP = currentOP->next;
+					  if (nextOP) {
+              do {
+                if (!nextOP->next) currentOP = nextOP;
+                nextOP = nextOP->next;
+              } while (nextOP);
 					  }
 					  currentOP->next = newOP;
 					  currentOP = newOP;
 				  }
-
-				/* Prepare var name*/
-       	nlen = strlen(cd[i].name);
-       	name = malloc(nlen+sizeof(char*));
-        if (!name) {
-          perror("LRC_assignDefaults: line 1095 malloc failed");
-          return NULL;
-        }
-       	strncpy(name, cd[i].name, nlen);
-				name[nlen] = LRC_NULL;
-       	
-				currentOP->name = malloc(nlen+sizeof(char*));
-       	strncpy(currentOP->name, name, nlen);
-				currentOP->name[nlen] = LRC_NULL;
-      
-				free(name);
-
-				/* Prepare the value */
-        vlen = strlen(cd[i].value);
-        value = malloc(vlen+sizeof(char*));
-        if (!value) {
-          perror("LRC_assignDefaults: line 1116 malloc failed");
-          return NULL;
-        }
-        strncpy(value, cd[i].value, vlen);
-				value[vlen] = LRC_NULL;
-          
-        currentOP->value = malloc(vlen+sizeof(char*));
-        if (!currentOP->value) {
-          perror("LRC_assignDefaults: line 1125 malloc failed");
-          return NULL;
-        }
-        strncpy(currentOP->value, value, vlen);
-				currentOP->value[vlen] = LRC_NULL;
-      
-      	free(value);
 				
-        /* Assign type */
-				currentOP->type = cd[i].type;
+          currentOP->name = malloc(nlen+sizeof(char*));
+       	  strncpy(currentOP->name, name, nlen);
+				  currentOP->name[nlen] = LRC_NULL;
+				
+          /* Prepare the value */
+          vlen = strlen(cd[i].value);
+          value = malloc(vlen+sizeof(char*));
+          if (!value) {
+            perror("LRC_assignDefaults: line 1116 malloc failed");
+            return NULL;
+          }
+          strncpy(value, cd[i].value, vlen);
+          value[vlen] = LRC_NULL;
+            
+          currentOP->value = malloc(vlen+sizeof(char*));
+          if (!currentOP->value) {
+            perror("LRC_assignDefaults: line 1125 malloc failed");
+            return NULL;
+          }
+          strncpy(currentOP->value, value, vlen);
+          currentOP->value[vlen] = LRC_NULL;
+        
+          free(value);
+          
+          /* Assign type */
+          currentOP->type = cd[i].type;
 				} else {
           LRC_modifyOption(current->space, currentOP->name, cd[i].value, cd[i].type, current);
         }
+				
+        free(name);
       }
 
       i++;
@@ -1307,7 +1312,7 @@ LRC_configOptions* LRC_findOption(char* varname, LRC_configNamespace* current){
     if (current->options) {
       testOP = current->options;
       vlen = strlen(varname);
-      var = malloc(vlen + 2*sizeof(char*));
+      var = malloc(vlen + sizeof(char*));
       strncpy(var, varname, vlen);
       var[vlen] = LRC_NULL;
 

@@ -59,14 +59,13 @@ int main(int argc, char* argv[]){
    * This will create a linked list with config options
    * */
   head = LRC_assignDefaults(ct); 
-
+	
 	printf("\nDefault configuration:\n\n");
 
   /* LRC_printAll
    * This function can be used at any time
    */
 	LRC_printAll(head);
-
 
   opts = LRC_allOptions(head);
   printf("opts = %d\n", opts);
