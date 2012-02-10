@@ -13,9 +13,13 @@
 
 #include "libreadconfig.h"
 
+#define FILEA "lrc-config"
+#define FILEB "lrc-ascii"
+
 #if HAVE_HDF5_H
 	#include "libreadconfig_hdf5.h"
-	#include "hdf5.h"
+	#include <hdf5.h>
+  #define FILEC "lrc-hdf5.h5"
 #endif
 
 int main(int argc, char* argv[]){
@@ -36,9 +40,9 @@ int main(int argc, char* argv[]){
   float epoch;
   double period;
 
-
 #if HAVE_HDF5_H
-	hid_t fileid;
+	hid_t file_id;
+  herr_t status;
 #endif
 
 	/* Assign defaults */
@@ -70,13 +74,14 @@ int main(int argc, char* argv[]){
   opts = LRC_allOptions(head);
   printf("opts = %d\n", opts);
 
+#ifndef HAVE_HDF5_H
 	/* Parse ASCII config file. 
    * Will override defaults and ignore any option not included in defaults
    * */
-	inif = fopen("lrc-config","ro");
-  if(inif != NULL){
+	inif = fopen(FILEA,"ro");
+  if (inif != NULL) {
 	  nms = LRC_ASCIIParser(inif, sep, comm, head);
-  }else{
+  } else {
     perror("Error opening file: ");
     exit(-1);
   }
@@ -89,30 +94,29 @@ int main(int argc, char* argv[]){
 	LRC_modifyOption("logs", "dump","234", LRC_INT, head);
 
 	/* Write new config file */
-	inif = fopen("lrc-ascii", "w");
-  if(inif != NULL){
+	inif = fopen(FILEB, "w");
+  if (inif != NULL) {
 	  LRC_ASCIIWriter(inif, sep, comm, head);
-  }else{
+  } else {
     perror("Error opening file for write: ");
     exit(-1);
   }
 	fclose(inif);
-
+#endif
 
 #if HAVE_HDF5_H
 	/* Write HDF5 file */
-  fileid = H5Fcreate("lrc-hdf-test.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  LRC_HDF5Writer(fileid, "myconfig", head);
-  H5Fclose(fileid);
-  
+  file_id = H5Fcreate(FILEC, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  LRC_HDF5Writer(file_id, "myconfig", head);
+  status = H5Fclose(file_id);
   
   /* Reopen and read HDF5 config */
-  fileid = H5Fopen("lrc-hdf-test.h5", H5F_ACC_RDONLY, H5P_DEFAULT);
-  nms = LRC_HDF5Parser(fileid, "myconfig", head);
+  file_id = H5Fopen(FILEC, H5F_ACC_RDONLY, H5P_DEFAULT);
+  nms = LRC_HDF5Parser(file_id, "myconfig", head);
 
   printf("\nHDF5 config:\n\n");
   LRC_printAll(head);
-  H5Fclose(fileid);
+  H5Fclose(file_id);
   
 #endif
 

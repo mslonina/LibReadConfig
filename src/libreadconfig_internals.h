@@ -1,7 +1,7 @@
 /*
  * LIBREADCONFIG
  *
- * Copyright (c) 2010-2011, Mariusz Slonina (Nicolaus Copernicus University)
+ * Copyright (c) 2010-2012, Mariusz Slonina (Nicolaus Copernicus University)
  * All rights reserved.
  *
  * LIBREADCONFIG was created to help in handling config files by providing common
@@ -39,6 +39,8 @@
 #ifndef LIBREADCONFIG_INTERNALS_H
 #define LIBREADCONFIG_INTERNALS_H
 
+#include "libreadconfig.h"
+
 void LRC_message(int line, int type, char* message);
 char* LRC_trim(char*);
 char* LRC_nameTrim(char*);
@@ -65,8 +67,8 @@ LRC_configNamespace* LRC_lastLeaf(LRC_configNamespace* head);
  *  Type of the variable
  */
 typedef struct{
-  char* name;
-  char* value;
+  char name[LRC_CONFIG_LEN];
+  char value[LRC_CONFIG_LEN];
   int type;
 } ccd_t;
 #endif

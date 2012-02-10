@@ -1,8 +1,9 @@
 Requirements
 ------------
 
-- CMake >= 2.8
-- HDF5 >= 1.8 (optional)
+- GCC 4.6+ or equivalent
+- CMake and CPack >= 2.8
+- HDF5 >= 1.8 (required for the Mechanic)
 
 Compilation
 -----------
@@ -23,5 +24,3 @@ By default, it will install to /usr/local. To change this use:
 
    -DCMAKE_INSTALL_PREFIX:PATH=/your/path
 
-There is also universal binary for Mac/Intel provided on the project's website:
-http://git.astri.umk.pl/projects/lrc

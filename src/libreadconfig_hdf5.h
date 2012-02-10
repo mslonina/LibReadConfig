@@ -1,7 +1,7 @@
 /*
  * LIBREADCONFIG
  *
- * Copyright (c) 2010-2011, Mariusz Slonina (Nicolaus Copernicus University)
+ * Copyright (c) 2010-2012, Mariusz Slonina (Nicolaus Copernicus University)
  * All rights reserved.
  *
  * LIBREADCONFIG was created to help in handling config files by providing common
@@ -40,12 +40,12 @@
 #define LIBREADCONFIG_HDF5_H
 
 #include "libreadconfig.h"
-#include "hdf5.h"
+#include <hdf5.h>
 
 #define LRC_CONFIG_GROUP "config"
 #define LRC_HDF5_DATATYPE "LRC_Config"
 
-int LRC_HDF5Parser(hid_t, char* group_name, LRC_configNamespace* head);
-int LRC_HDF5Writer(hid_t, char* group_name, LRC_configNamespace* head);
+int LRC_HDF5Parser(hid_t file_id, char* group_name, LRC_configNamespace* head);
+int LRC_HDF5Writer(hid_t file_id, char* group_name, LRC_configNamespace* head);
 
 #endif

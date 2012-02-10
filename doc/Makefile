@@ -1,12 +1,13 @@
+CC=mpicc
 all: lrc-example lrc-example-hdf
 
 lrc-example:
-	mpicc -g -c lrc-example.c -o lrc-example.o
-	mpicc lrc-example.o -o lrc-example -lreadconfig
+	$(CC) -g -c lrc-example.c -o lrc-example.o
+	$(CC) lrc-example.o -o lrc-example -lreadconfig
 
 lrc-example-hdf:
-	mpicc -g -c lrc-example.c -o lrc-example.o -DHAVE_HDF5_H
-	mpicc lrc-example.o -o lrc-example-hdf -lreadconfig -lhdf5
+	$(CC) -g -c lrc-example.c -o lrc-example-hdf.o -DHAVE_HDF5_H
+	$(CC) lrc-example-hdf.o -o lrc-example-hdf -lreadconfig -lhdf5 -DHAVE_HDF5_H
 
 clean:
 	rm -f *.o lrc-example lrc-example-hdf

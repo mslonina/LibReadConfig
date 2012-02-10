@@ -1,6 +1,6 @@
 LIBREADCONFIG
 
-Copyright (c) 2010-2011, Mariusz Slonina (Nicolaus Copernicus University)
+Copyright (c) 2010-2012, Mariusz Slonina (Nicolaus Copernicus University)
 All rights reserved.
 
 LIBREADCONFIG was created to help in handling config files by providing common

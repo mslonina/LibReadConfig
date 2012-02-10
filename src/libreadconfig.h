@@ -1,7 +1,7 @@
 /*
  * LIBREADCONFIG
  *
- * Copyright (c) 2010-2011, Mariusz Slonina (Nicolaus Copernicus University)
+ * Copyright (c) 2010-2012, Mariusz Slonina (Nicolaus Copernicus University)
  * All rights reserved.
  *
  * LIBREADCONFIG was created to help in handling config files by providing common
@@ -63,8 +63,9 @@
  */
 #define LRC_MAX_LINE_LENGTH 1024
 #define LRC_CONFIG_LEN 512
-#define LRC_OPTIONS_END {NULL, NULL, NULL, 0}
 #define LRC_NULL '\0'
+//#define LRC_OPTIONS_END {NULL, NULL, NULL, 0}
+#define LRC_OPTIONS_END {LRC_NULL, LRC_NULL, LRC_NULL, 0}
 
 /**
  * @def LRC_E_CONFIG_SYNTAX
@@ -141,8 +142,8 @@ enum datatypes{
  *   The type of the variable.
  */
 typedef struct LRC_configOptions{
-  char* name;
-  char* value;
+  char name[LRC_CONFIG_LEN];
+  char value[LRC_CONFIG_LEN];
   int type;
   struct LRC_configOptions* next;
 } LRC_configOptions;
@@ -161,7 +162,7 @@ typedef struct LRC_configOptions{
  *   The number of options read for given config options struct.
  */
 typedef struct LRC_configNamespace{
-  char* space;
+  char space[LRC_CONFIG_LEN];
   LRC_configOptions* options;
   struct LRC_configNamespace* next;
 } LRC_configNamespace;
@@ -180,9 +181,9 @@ typedef struct LRC_configNamespace{
  *   The type of the value.
  */
 typedef struct {
-  char* space;
-  char* name;
-  char* value;
+  char space[LRC_CONFIG_LEN];
+  char name[LRC_CONFIG_LEN];
+  char value[LRC_CONFIG_LEN];
   int type;
 } LRC_configDefaults;
 
