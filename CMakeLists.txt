@@ -3,7 +3,7 @@ project (libreadconfig)
 
 set (LRC_VERSION_MAJOR 0)
 set (LRC_VERSION_MINOR 12)
-set (LRC_VERSION_PATCH 0-BETA-2)
+set (LRC_VERSION_PATCH 0)
 
 option (BUILD_HDF5 "Build HDF5 bindings" on)
 option (BUILD_DOCS "Build documentation" off)
@@ -45,7 +45,7 @@ endif (BUILD_HDF5)
 add_subdirectory(src)
 
 SET (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Library for reading/writing config files")
-SET (CPACK_PACKAGE_VENDOR "Mariusz Slonina, NCU")
+SET (CPACK_PACKAGE_VENDOR "Celestial Mechanics Group, Torun Centre for Astronomy, NCU")
 SET (CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 SET (CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
 SET (CPACK_PACKAGE_VERSION_MAJOR "${LRC_VERSION_MAJOR}")
