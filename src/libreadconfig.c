@@ -1484,3 +1484,47 @@ int LRC_itoa(char* str, int val, int type){
  * @}
  */
 
+/**
+ * @function
+ * Counts the number of all options in the default LRC options structure. The option
+ * structure must end with LRC_OPTIONS_END
+ */
+int LRC_countDefaultOptions(LRC_configDefaults *in) {
+  int options;
+
+  options = 0;
+
+  while (in[options].space[0] != LRC_NULL) {
+    options++;
+  }
+
+  return options;
+}
+
+/**
+ * @function
+ * Merges two LRC default option structures
+ *
+ * @param LRC_configDefaults*
+ *  Input structure
+ * @param LRC_configDefaults*
+ *  The structure, that we want to merge with the Input one
+ *
+ * @return
+ *  Error code or 0 otherwise. The Input structure is extended with the second one.
+ */
+int LRC_mergeDefaults(LRC_configDefaults *in, LRC_configDefaults *add) {
+  int status;
+  int index, addopts, i;
+  status = 0;
+
+  index = LRC_countDefaultOptions(in);
+  addopts = LRC_countDefaultOptions(add);
+
+  for (i = 0; i < addopts; i++) {
+    in[index + i] = add[i];
+  }
+
+  return status;
+}
+
