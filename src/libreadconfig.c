@@ -817,7 +817,7 @@ int LRC_HDF5Writer(hid_t file, char* group_name, LRC_configNamespace* head){
 
   hid_t master_group, group, dataset, dataspace, memspace;
   hid_t ccm_tid, ccf_tid, name_dt, value_dt;
-  hsize_t dims[2], dimsm[1], offset[2], count[2], stride[2];
+  hsize_t dims[2], dimsm[2], offset[2], count[2], stride[2];
   herr_t status;
   htri_t cctt;
   int k = 0;
@@ -1528,3 +1528,77 @@ int LRC_mergeDefaults(LRC_configDefaults *in, LRC_configDefaults *add) {
   return status;
 }
 
+/**
+ * @function
+ * Counts all options in all namespaces
+ */
+int LRC_countAllOptions(LRC_configNamespace *head) {
+  int opts = 0, allopts = 0;
+  LRC_configNamespace *current;
+
+  current = head;
+  while (current) {
+    opts = LRC_countOptions(current->space, current);
+    allopts = allopts + opts;
+    current = current->next;
+  }
+    
+  return allopts;
+}
+
+/**
+ * @function
+ * Converts the linked list back to structure
+ *
+ * @return
+ * Dynamically allocated options structure. You must free it.
+ */
+int LRC_head2struct_noalloc(LRC_configNamespace *head, LRC_configDefaults *c) {
+  int i = 0;
+  size_t len;
+
+  LRC_configOptions *currentOP = NULL;
+  LRC_configOptions *nextOP = NULL;
+  LRC_configNamespace *nextNM = NULL;
+  LRC_configNamespace *current = NULL;
+
+  if (head) {
+    current = head;
+
+    do { 
+      if (current) {
+        nextNM = current->next;
+        currentOP = current->options;
+        do { 
+          if (currentOP) {
+            len = strlen(current->space) + 1; 
+            strncpy(c[i].space, current->space, len);
+            len = strlen(currentOP->name) + 1; 
+            strncpy(c[i].name, currentOP->name, len);
+            len = strlen(currentOP->value) + 1; 
+            strncpy(c[i].value, currentOP->value, len);
+            c[i].type = currentOP->type;
+            
+            i++; 
+            nextOP = currentOP->next;
+            currentOP = nextOP;
+          }    
+        } while(currentOP);
+        current = nextNM;
+      }    
+    } while(current);
+  }
+
+  return 0;
+}
+
+LRC_configDefaults* LRC_head2struct(LRC_configNamespace *head) {
+  LRC_configDefaults *c;
+  int opts = 0;
+  opts = LRC_allOptions(head);
+
+  c = calloc(opts*sizeof(LRC_configDefaults), sizeof(LRC_configDefaults));
+  
+  LRC_head2struct_noalloc(head, c);
+  return c;
+}

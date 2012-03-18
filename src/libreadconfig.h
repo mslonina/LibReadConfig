@@ -211,6 +211,8 @@ int LRC_countOptions(char* space, LRC_configNamespace* head);
 char* LRC_getOptionValue(char* space, char* var, LRC_configNamespace* current);
 int LRC_countDefaultOptions(LRC_configDefaults *in);
 int LRC_mergeDefaults(LRC_configDefaults *in, LRC_configDefaults *add);
+LRC_configDefaults* LRC_head2struct(LRC_configNamespace *head);
+int LRC_head2struct_noalloc(LRC_configNamespace *head, LRC_configDefaults *c);
 
 /* Converters */
 int LRC_option2int(char* space, char* var, LRC_configNamespace* head);
