@@ -220,5 +220,6 @@ float LRC_option2float(char* space, char* var, LRC_configNamespace* head);
 double LRC_option2double(char* space, char* var, LRC_configNamespace* head);
 long double LRC_option2Ldouble(char* space, char* var, LRC_configNamespace* head);
 int LRC_itoa(char* deststr, int value, int type);
+char* LRC_trim(char*);
 
 #endif

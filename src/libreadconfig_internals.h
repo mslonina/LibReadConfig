@@ -42,7 +42,6 @@
 #include "libreadconfig.h"
 
 void LRC_message(int line, int type, char* message);
-char* LRC_trim(char*);
 char* LRC_nameTrim(char*);
 int LRC_charCount(char*, char*);
 int LRC_matchType(char*, char*, LRC_configDefaults*, int);
