@@ -53,6 +53,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <inttypes.h>
+#include <popt.h>
 
 /**
  * @def LRC_MAX_LINE_LENGTH
@@ -64,8 +65,6 @@
 #define LRC_MAX_LINE_LENGTH 1024
 #define LRC_CONFIG_LEN 512
 #define LRC_NULL '\0'
-//#define LRC_OPTIONS_END {NULL, NULL, NULL, 0}
-#define LRC_OPTIONS_END {LRC_NULL, LRC_NULL, LRC_NULL, 0}
 
 /**
  * @def LRC_E_CONFIG_SYNTAX
@@ -115,18 +114,11 @@ enum LRC_messages_type{
 #define LRC_MSG_NONAMESPACE "No namespace has been specified"
 #define LRC_MSG_UNKNOWN_NAMESPACE "Unknown namespace"
 
-/**
- * @enum datatypes
- * @brief List of datatypes. More may be added in the future.
- */
-enum datatypes{ 
-  LRC_INT, 
-  LRC_LONGINT,
-  LRC_FLOAT, 
-  LRC_DOUBLE, 
-  LRC_LONGDOUBLE, 
-  LRC_STRING 
-} types; 
+#define LRC_INT POPT_ARG_INT
+#define LRC_FLOAT POPT_ARG_FLOAT
+#define LRC_DOUBLE POPT_ARG_DOUBLE
+#define LRC_STRING POPT_ARG_STRING
+#define LRC_LONGINT POPT_ARG_LONG
 
 /**
  * @struct LRC_configOptions
@@ -183,7 +175,9 @@ typedef struct LRC_configNamespace{
 typedef struct {
   char space[LRC_CONFIG_LEN];
   char name[LRC_CONFIG_LEN];
+  char shortName;
   char value[LRC_CONFIG_LEN];
+  char description[LRC_CONFIG_LEN];
   int type;
 } LRC_configDefaults;
 
@@ -221,5 +215,7 @@ double LRC_option2double(char* space, char* var, LRC_configNamespace* head);
 long double LRC_option2Ldouble(char* space, char* var, LRC_configNamespace* head);
 int LRC_itoa(char* deststr, int value, int type);
 char* LRC_trim(char*);
+
+#define LRC_OPTIONS_END {LRC_NULL, LRC_NULL, LRC_NULL, LRC_NULL, LRC_NULL, 0}
 
 #endif
