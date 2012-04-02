@@ -1515,14 +1515,21 @@ int LRC_countDefaultOptions(LRC_configDefaults *in) {
  */
 int LRC_mergeDefaults(LRC_configDefaults *in, LRC_configDefaults *add) {
   int status;
-  int index, addopts, i;
+  int index, addopts, i, j, flag;
   status = 0;
 
   index = LRC_countDefaultOptions(in);
   addopts = LRC_countDefaultOptions(add);
 
   for (i = 0; i < addopts; i++) {
-    in[index + i] = add[i];
+    flag = 0;
+    for (j = 0; j < index; j++) {
+      if (strcmp(in[j].name,add[i].name) == 0) {
+        in[j] = add[i];
+        flag = 1;
+      } 
+    }
+    if (flag == 0) in[index + i] = add[i];
   }
 
   return status;
