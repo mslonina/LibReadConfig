@@ -114,6 +114,7 @@ enum LRC_messages_type{
 #define LRC_MSG_NONAMESPACE "No namespace has been specified"
 #define LRC_MSG_UNKNOWN_NAMESPACE "Unknown namespace"
 
+#define LRC_VAL POPT_ARG_VAL
 #define LRC_INT POPT_ARG_INT
 #define LRC_FLOAT POPT_ARG_FLOAT
 #define LRC_DOUBLE POPT_ARG_DOUBLE
