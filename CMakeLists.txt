@@ -34,7 +34,7 @@ CONFIGURE_FILE (
 )
 
 add_definitions (-DHAVE_CONFIG_H)
-set (CMAKE_C_FLAGS "-Warray-bounds -Wall -Wextra -std=c99")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Warray-bounds -Wall -Wextra -std=c99")
 
 if (BUILD_HDF5)
   CHECK_INCLUDE_FILES (hdf5.h HAVE_HDF5_H)
