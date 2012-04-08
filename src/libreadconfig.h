@@ -217,6 +217,6 @@ long double LRC_option2Ldouble(char* space, char* var, LRC_configNamespace* head
 int LRC_itoa(char* deststr, int value, int type);
 char* LRC_trim(char*);
 
-#define LRC_OPTIONS_END {LRC_NULL, LRC_NULL, LRC_NULL, LRC_NULL, LRC_NULL, 0}
+#define LRC_OPTIONS_END {.space="", .name="", .shortName='\0', .value="", .description="", .type=0}
 
 #endif
