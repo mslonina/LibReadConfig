@@ -180,6 +180,7 @@ typedef struct {
   char value[LRC_CONFIG_LEN];
   char description[LRC_CONFIG_LEN];
   int type;
+  int attr;
 } LRC_configDefaults;
 
 /**

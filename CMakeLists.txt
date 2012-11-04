@@ -3,7 +3,7 @@ project (libreadconfig)
 
 set (LRC_VERSION_MAJOR 0)
 set (LRC_VERSION_MINOR 12)
-set (LRC_VERSION_PATCH 2)
+set (LRC_VERSION_PATCH 4)
 
 option (BUILD_HDF5 "Build HDF5 bindings" off)
 option (BUILD_DOCS "Build documentation" off)
