@@ -119,7 +119,7 @@ enum LRC_messages_type{
 #define LRC_FLOAT POPT_ARG_FLOAT
 #define LRC_DOUBLE POPT_ARG_DOUBLE
 #define LRC_STRING POPT_ARG_STRING
-#define LRC_LONGINT POPT_ARG_LONG
+#define LRC_LONG POPT_ARG_LONG
 
 /**
  * @struct LRC_configOptions
